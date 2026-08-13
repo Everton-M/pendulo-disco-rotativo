@@ -1,165 +1,109 @@
-# Guia do modelo Simulink
+# Modelo Simulink
 
-Este guia explica como abrir, executar, interpretar e modificar o modelo
-`rotating_pendulum.slx`. O diagrama foi construído somente com blocos básicos,
-para que a passagem da equação diferencial ao Simulink permaneça visível.
+O modelo `rotating_pendulum.slx` implementa a equação de movimento sem ocultar
+os termos físicos em um único bloco. Essa escolha facilita a conferência entre
+a derivação e o diagrama.
 
-![Diagrama completo do Simulink](figures/simulink-diagram.png)
+![Diagrama completo](figures/simulink-diagram.png)
 
-## 1. Arquivos
+## Arquivos
 
-- `matlab/simulink/rotating_pendulum.slx`: modelo pronto para uso;
-- `matlab/simulink/build_simulink_model.m`: recria o `.slx` do zero;
-- `matlab/simulink/open_simulink_model.m`: abre e enquadra o diagrama;
-- `matlab/simulink/validate_simulink_model.m`: compara o Simulink com `ode45`;
-- `matlab/simulink/validate_simulink_fixed_step.m`: compara `ode4` com o RK4;
-- `matlab/+rotpend/defaultParameters.m`: parâmetros físicos e iniciais.
+- `matlab/simulink/rotating_pendulum.slx`: modelo pronto;
+- `build_simulink_model.m`: reconstrói o arquivo `.slx`;
+- `open_simulink_model.m`: abre e enquadra o diagrama;
+- `validate_simulink_model.m`: compara com MATLAB/`ode45`;
+- `validate_simulink_fixed_step.m`: compara `ode4` com o RK4 do projeto.
 
-Manter o gerador em código é útil no GitHub porque arquivos `.slx` são binários:
-o script mostra exatamente quais blocos, parâmetros e conexões formam o modelo.
-
-## 2. Como abrir
-
-Abra o MATLAB na raiz do repositório e execute:
+## Como executar
 
 ```matlab
+cd('C:\Users\E\Documents\1 - Unicamp\7 - Projetos\pendulo-disco-rotativo')
 addpath('matlab')
 addpath('matlab/simulink')
 open_simulink_model
 ```
 
-Também é possível abrir diretamente `matlab/simulink/rotating_pendulum.slx`.
+No modelo, clique em **Run**. Os Scopes mostram `[psiDDot, psiDot, psi]` e a
+tração. Os blocos `To Workspace` gravam os sinais no objeto de saída da
+simulação.
 
-## 3. Como executar
+## Leitura do diagrama
 
-Na janela do Simulink, pressione o botão **Run**. O tempo final padrão é 20 s.
-Ao terminar, abra:
-
-- `Scope estados`: mostra, nessa ordem, `psiDDot`, `psiDot` e `psi`;
-- `Scope tensao`: mostra a força de tração calculada.
-
-Os blocos `Salvar ...` também criam séries temporais chamadas `simPsi`,
-`simPsiDot`, `simPsiDDot` e `simTension` na saída da simulação.
-
-Para executar pela linha de comando:
-
-```matlab
-out = sim('rotating_pendulum');
-plot(out.simPsi.Time, rad2deg(out.simPsi.Data))
-xlabel('Tempo [s]')
-ylabel('\psi [graus]')
-grid on
-```
-
-## 4. Como ler o diagrama
-
-O caminho principal é:
+A parte superior esquerda gera, a partir do relógio:
 
 ```text
-Equação dinâmica -> dividir por l -> psiDDot -> Integrador -> psiDot
-                                                   |
-                                                   v
-                                              Integrador -> psi
+alpha, alphaDot, alphaDDot
+beta,  betaDot,  betaDDot
 ```
 
-O ângulo `psi` retorna aos blocos `sin(psi)` e `cos(psi)`. Essa realimentação
-fecha a equação diferencial não linear. O tempo produzido pelo bloco `Tempo t`
-gera `beta(t) = beta0 + betaRate*t`.
+Os três sinais de cada junta vêm da mesma expressão analítica; por isso não há
+incompatibilidade entre posição, velocidade e aceleração.
 
-Os três termos que entram no bloco `Equacao dinamica` são:
+A região central calcula
 
 ```text
-+ (alphaRate + betaRate)^2 * (r + l*sin(psi)) * cos(psi)
-- g*sin(psi)
-- b*alphaRate^2*sin(beta)*cos(psi)
+Omega = alphaDot + betaDot
+rho   = r + l*sin(psi)
+A_C   = b*(alphaDot^2*sin(beta) + alphaDDot*cos(beta))
 ```
 
-O bloco `Dividir por l` transforma essa soma em `psiDDot`.
+e monta
 
-## 5. Condições iniciais e parâmetros
+```text
+psiDDot = (Omega^2*rho*cos(psi) - g*sin(psi) - A_C*cos(psi))/l.
+```
 
-As condições iniciais ficam nos dois integradores:
+Depois, dois integradores produzem `psiDot` e `psi`. O laço fecha porque `psi`
+volta aos blocos `sin(psi)` e `cos(psi)`.
 
-- `Integrador psiDot`: `p.psiRate0`;
-- `Integrador psi`: `p.psi0`.
+`betaDDot` é gerado e exportado, embora não entre na EDO escalar. Ele é
+necessário no cálculo completo da aceleração em `X2` e no modelo Multibody.
 
-Os parâmetros são armazenados no workspace do próprio modelo. Para mudar os
-valores padrão de forma permanente, edite `defaultParameters.m` e reconstrua:
+## Alterar o movimento prescrito
+
+O caso demonstrativo usa, para cada ângulo `q`,
+
+```text
+q(t) = q0 + meanRate*t
+       + amplitude*(sin(frequency*t + phase) - sin(phase)).
+```
+
+Os parâmetros ficam em `rotpend.defaultParameters`, nos campos
+`alphaProfile` e `betaProfile`. Depois de alterá-los, reconstrua o modelo:
 
 ```matlab
 build_simulink_model(false)
 ```
 
-Os ângulos devem estar em radianos. Por exemplo:
+Para usar outra lei — uma trajetória tabelada, um sinal medido ou a saída de um
+controlador — substitua os seis blocos de fonte. Preserve a ordem física:
+ângulo em radianos, velocidade em rad/s e aceleração em rad/s². Não derive
+numericamente um sinal ruidoso sem filtragem; forneça as derivadas da mesma lei
+de movimento sempre que possível.
 
-```matlab
-p.psi0 = deg2rad(15);
-```
+## Solvers
 
-## 6. Solver
-
-O modelo é entregue com:
-
-- tipo: `Variable-step`;
-- solver: `ode45`;
-- tolerância relativa: `1e-8`;
-- tolerância absoluta: `1e-10`;
-- passo máximo: `0.01 s`.
-
-Para reproduzir um RK4 de passo fixo, abra **Model Settings > Solver** e use:
-
-- tipo: `Fixed-step`;
-- solver: `ode4 (Runge-Kutta)`;
-- passo: `0.002`.
-
-Passo fixo é importante quando o modelo será executado em tempo real ou gerará
-código. Para análise numérica inicial, o passo variável é mais conveniente.
-
-## 7. Validação automática
-
-Execute:
+O arquivo é salvo com `ode45`, passo variável, `RelTol = 1e-8`,
+`AbsTol = 1e-10` e passo máximo de `0.01 s`. Para comparar diretamente com o
+RK4, o script de passo fixo troca temporariamente a configuração para `ode4` e
+`0.002 s`.
 
 ```matlab
 report = validate_simulink_model()
 fixedReport = validate_simulink_fixed_step()
 ```
 
-O procedimento simula o `.slx`, resolve a mesma equação com `ode45`, compara
-`psi` e `psiDot` nos mesmos instantes e verifica se a tração permanece positiva.
+No caso acelerado padrão, os erros máximos observados foram:
 
-Na configuração entregue, foram obtidos aproximadamente:
+| Comparação | erro em `psi` | erro em `psiDot` |
+|---|---:|---:|
+| Simulink `ode45` × MATLAB `ode45` | `2.81e-10 rad` | `1.30e-9 rad/s` |
+| Simulink `ode4` × RK4 MATLAB | `8.05e-16 rad` | `4.00e-15 rad/s` |
 
-```text
-erro máximo em psi:     5.73e-10 rad
-erro máximo em psiDot:  2.48e-09 rad/s
-tração mínima:          2.456 N
-```
+A tração mínima foi `2.458 N`, portanto o vínculo permaneceu tracionado nesse
+ensaio numérico.
 
-Com `ode4` e passo fixo de 0,002 s, a comparação com o RK4 implementado neste
-projeto apresentou erros de aproximadamente 2,39e-15 rad em `psi` e
-1,02e-14 rad/s em `psiDot`.
+## Parâmetros geométricos
 
-## 8. Significado de r, h e c
-
-- `r` é a distância radial de `C` a `D` e aparece no termo centrífugo;
-- `h` é a distância vertical de `C` a `D`;
-- `c` é a distância vertical de `B` a `C`;
-- a altura de `D` em relação a `B` é `c + h`.
-
-Como `c` e `h` são deslocamentos verticais constantes, eles não aparecem na
-equação angular ideal. Ambos aparecem na posição absoluta usada na trajetória
-3D. O modelo Simulink atual resolve a dinâmica angular e a tração; a posição 3D
-continua sendo calculada pelo pós-processamento MATLAB.
-
-## 9. Próxima etapa: modelo físico 3D
-
-Este `.slx` é um modelo **por equações**. A montagem de sólidos, juntas e corpos
-é uma etapa diferente, feita no Simscape Multibody. A sequência recomendada é:
-
-1. validar este diagrama contra MATLAB;
-2. criar os corpos e juntas no Simscape Multibody;
-3. importar ou associar a geometria CAD;
-4. comparar `psi`, posição de `E` e forças de vínculo entre os dois modelos.
-
-Assim, diferenças no modelo 3D podem ser atribuídas à geometria, massa ou
-juntas, pois a equação matemática já foi validada separadamente.
+`r` é a distância radial de `C` a `D`; `h` é o deslocamento vertical. Os valores
+`a`, `c` e `h` afetam a posição absoluta, mas não a EDO ideal de `psi`.

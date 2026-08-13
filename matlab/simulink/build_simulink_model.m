@@ -1,7 +1,7 @@
 function modelPath = build_simulink_model(openAfterBuild)
-%BUILD_SIMULINK_MODEL Generate the nonlinear rotating-pendulum Simulink model.
-% The resulting SLX is reproducible from source and stores its parameters in
-% the model workspace. Run this function again after changing the diagram.
+%BUILD_SIMULINK_MODEL Generate the nonlinear rotating-pendulum model.
+% Alpha and beta are prescribed through consistent angle, rate and
+% acceleration signals. Replace the source blocks to use another motion law.
 
 arguments
     openAfterBuild (1,1) logical = true
@@ -20,138 +20,158 @@ if bdIsLoaded(modelName)
     close_system(modelName, 0);
 end
 new_system(modelName);
-
-set_param(modelName, ...
-    'SolverType', 'Variable-step', ...
-    'Solver', 'ode45', ...
-    'StopTime', '20', ...
-    'RelTol', '1e-8', ...
-    'AbsTol', '1e-10', ...
-    'MaxStep', '0.01', ...
-    'ReturnWorkspaceOutputs', 'on', ...
+set_param(modelName, 'SolverType', 'Variable-step', 'Solver', 'ode45', ...
+    'StopTime', '20', 'RelTol', '1e-8', 'AbsTol', '1e-10', ...
+    'MaxStep', '0.01', 'ReturnWorkspaceOutputs', 'on', ...
     'SignalLogging', 'off');
+assignin(get_param(modelName, 'ModelWorkspace'), 'p', p);
 
-modelWorkspace = get_param(modelName, 'ModelWorkspace');
-assignin(modelWorkspace, 'p', p);
-
-% Prescribed disk angle beta(t).
+% Prescribed motion and its analytical derivatives.
 add_block('simulink/Sources/Clock', modelName + "/Tempo t", ...
-    'Position', [35 70 65 90]);
-add_block('simulink/Math Operations/Gain', modelName + "/betaRate", ...
-    'Gain', 'p.betaRate', 'Position', [100 60 165 100]);
-add_block('simulink/Sources/Constant', modelName + "/beta0", ...
-    'Value', 'p.beta0', 'Position', [100 125 165 155]);
-add_block('simulink/Math Operations/Sum', modelName + "/beta(t)", ...
-    'Inputs', '++', 'Position', [205 75 235 135]);
+    'Position', [25 65 55 85]);
+addMotionFcn(modelName, 'alpha', 'p.alphaProfile', [95 25]);
+addMotionFcn(modelName, 'alphaDot', 'p.alphaProfile', [95 70], 1);
+addMotionFcn(modelName, 'alphaDDot', 'p.alphaProfile', [95 115], 2);
+addMotionFcn(modelName, 'beta', 'p.betaProfile', [95 170]);
+addMotionFcn(modelName, 'betaDot', 'p.betaProfile', [95 215], 1);
+addMotionFcn(modelName, 'betaDDot', 'p.betaProfile', [95 260], 2);
+
 add_block('simulink/Math Operations/Trigonometric Function', ...
     modelName + "/sin(beta)", 'Operator', 'sin', ...
-    'Position', [280 85 340 125]);
+    'Position', [250 165 310 195]);
+add_block('simulink/Math Operations/Trigonometric Function', ...
+    modelName + "/cos(beta)", 'Operator', 'cos', ...
+    'Position', [250 210 310 240]);
 
-% State feedback: trigonometric functions of psi.
+% Omega = alphaDot + betaDot and Omega^2.
+add_block('simulink/Math Operations/Sum', modelName + "/Omega", ...
+    'Inputs', '++', 'Position', [260 75 290 120]);
+add_block('simulink/Math Operations/Product', modelName + "/Omega squared", ...
+    'Inputs', '**', 'Position', [335 75 375 120]);
+
+% Tangential acceleration of C projected on Y2:
+% b*(alphaDot^2*sin(beta) + alphaDDot*cos(beta)).
+add_block('simulink/Math Operations/Product', ...
+    modelName + "/alphaDot squared", 'Inputs', '**', ...
+    'Position', [345 135 385 175]);
+add_block('simulink/Math Operations/Product', ...
+    modelName + "/alphaDot2 sin(beta)", 'Inputs', '**', ...
+    'Position', [425 140 470 190]);
+add_block('simulink/Math Operations/Product', ...
+    modelName + "/alphaDDot cos(beta)", 'Inputs', '**', ...
+    'Position', [345 215 390 265]);
+add_block('simulink/Math Operations/Sum', ...
+    modelName + "/Aceleracao tangencial C", 'Inputs', '++', ...
+    'Position', [515 165 545 235]);
+add_block('simulink/Math Operations/Gain', ...
+    modelName + "/Multiplicar por b", 'Gain', 'p.b', ...
+    'Position', [590 180 655 220]);
+
+% State feedback.
 add_block('simulink/Math Operations/Trigonometric Function', ...
     modelName + "/sin(psi)", 'Operator', 'sin', ...
-    'Position', [310 285 375 325]);
+    'Position', [345 390 405 425]);
 add_block('simulink/Math Operations/Trigonometric Function', ...
     modelName + "/cos(psi)", 'Operator', 'cos', ...
-    'Position', [310 365 375 405]);
-
-% rho = r + l*sin(psi).
+    'Position', [345 455 405 490]);
 add_block('simulink/Math Operations/Gain', modelName + "/l sin(psi)", ...
-    'Gain', 'p.l', 'Position', [420 275 485 335]);
+    'Gain', 'p.l', 'Position', [450 380 515 430]);
 add_block('simulink/Sources/Constant', modelName + "/raio r", ...
-    'Value', 'p.r', 'Position', [420 225 485 255]);
+    'Value', 'p.r', 'Position', [450 335 515 365]);
 add_block('simulink/Math Operations/Sum', modelName + "/rho", ...
-    'Inputs', '++', 'Position', [525 260 555 320]);
+    'Inputs', '++', 'Position', [555 365 585 425]);
 
-% Centrifugal term: Omega^2*rho*cos(psi).
-add_block('simulink/Math Operations/Gain', modelName + "/Omega squared", ...
-    'Gain', '(p.alphaRate+p.betaRate)^2', ...
-    'Position', [595 260 690 320]);
+% Dynamic equation.
 add_block('simulink/Math Operations/Product', ...
-    modelName + "/Termo centrifugo", 'Inputs', '**', ...
-    'Position', [735 270 780 330]);
-
-% Gravity term: g*sin(psi).
-add_block('simulink/Math Operations/Gain', modelName + "/Termo gravitacional", ...
-    'Gain', 'p.g', 'Position', [595 365 690 405]);
-
-% Arm excitation: b*alphaRate^2*sin(beta)*cos(psi).
+    modelName + "/Termo centrifugo", 'Inputs', '***', ...
+    'Position', [705 330 750 390]);
+add_block('simulink/Math Operations/Gain', ...
+    modelName + "/Termo gravitacional", 'Gain', 'p.g', ...
+    'Position', [590 455 665 490]);
 add_block('simulink/Math Operations/Product', ...
-    modelName + "/sin(beta) cos(psi)", 'Inputs', '**', ...
-    'Position', [425 95 470 155]);
-add_block('simulink/Math Operations/Gain', modelName + "/Termo do braco", ...
-    'Gain', 'p.b*p.alphaRate^2', 'Position', [530 100 650 150]);
-
-% Equation and the two integrations: psiDDot -> psiDot -> psi.
+    modelName + "/Termo do braco", 'Inputs', '**', ...
+    'Position', [705 205 750 255]);
 add_block('simulink/Math Operations/Sum', modelName + "/Equacao dinamica", ...
-    'Inputs', '+--', 'Position', [835 260 870 380]);
+    'Inputs', '+--', 'Position', [805 300 840 455]);
 add_block('simulink/Math Operations/Gain', modelName + "/Dividir por l", ...
-    'Gain', '1/p.l', 'Position', [915 295 985 345]);
+    'Gain', '1/p.l', 'Position', [885 350 955 400]);
 add_block('simulink/Continuous/Integrator', modelName + "/Integrador psiDot", ...
-    'InitialCondition', 'p.psiRate0', 'Position', [1035 285 1080 355]);
+    'InitialCondition', 'p.psiRate0', 'Position', [1000 340 1045 410]);
 add_block('simulink/Continuous/Integrator', modelName + "/Integrador psi", ...
-    'InitialCondition', 'p.psi0', 'Position', [1140 285 1185 355]);
+    'InitialCondition', 'p.psi0', 'Position', [1100 340 1145 410]);
 
 % Tension diagnostic.
-add_block('simulink/Math Operations/Product', modelName + "/sin(beta) sin(psi)", ...
-    'Inputs', '**', 'Position', [420 455 465 515]);
-add_block('simulink/Math Operations/Gain', modelName + "/Braco tensao", ...
-    'Gain', '-p.b*p.alphaRate^2', 'Position', [505 460 610 510]);
-add_block('simulink/Math Operations/Product', modelName + "/rho sin(psi)", ...
-    'Inputs', '**', 'Position', [595 535 640 595]);
-add_block('simulink/Math Operations/Gain', modelName + "/Centrifuga tensao", ...
-    'Gain', '(p.alphaRate+p.betaRate)^2', ...
-    'Position', [680 540 790 590]);
-add_block('simulink/Math Operations/Product', modelName + "/psiDot squared", ...
-    'Inputs', '**', 'Position', [595 625 640 685]);
-add_block('simulink/Math Operations/Gain', modelName + "/Tangencial tensao", ...
-    'Gain', 'p.l', 'Position', [680 630 790 680]);
+add_block('simulink/Math Operations/Product', ...
+    modelName + "/braco sin(psi)", 'Inputs', '**', ...
+    'Position', [705 535 750 585]);
+add_block('simulink/Math Operations/Gain', ...
+    modelName + "/Sinal braco tensao", 'Gain', '-1', ...
+    'Position', [790 540 855 580]);
+add_block('simulink/Math Operations/Product', ...
+    modelName + "/centrifuga tensao", 'Inputs', '***', ...
+    'Position', [705 610 750 670]);
+add_block('simulink/Math Operations/Product', ...
+    modelName + "/psiDot squared", 'Inputs', '**', ...
+    'Position', [705 705 750 755]);
+add_block('simulink/Math Operations/Gain', ...
+    modelName + "/l psiDot squared", 'Gain', 'p.l', ...
+    'Position', [790 710 865 750]);
 add_block('simulink/Math Operations/Gain', modelName + "/g cos(psi)", ...
-    'Gain', 'p.g', 'Position', [505 715 610 765]);
-add_block('simulink/Math Operations/Sum', modelName + "/Soma tensao especifica", ...
-    'Inputs', '++++', 'Position', [835 515 870 695]);
+    'Gain', 'p.g', 'Position', [590 785 665 825]);
+add_block('simulink/Math Operations/Sum', ...
+    modelName + "/Soma tensao especifica", 'Inputs', '++++', ...
+    'Position', [900 575 935 765]);
 add_block('simulink/Math Operations/Gain', modelName + "/Tensao T", ...
-    'Gain', 'p.m', 'Position', [915 575 985 625]);
+    'Gain', 'p.m', 'Position', [980 645 1050 695]);
 
-% Visualization and data export.
+% Scopes and exports.
 add_block('simulink/Signal Routing/Mux', modelName + "/Mux estados", ...
-    'Inputs', '3', 'Position', [1240 260 1245 380]);
+    'Inputs', '3', 'Position', [1195 325 1200 445]);
 add_block('simulink/Sinks/Scope', modelName + "/Scope estados", ...
-    'Position', [1300 280 1360 340]);
+    'Position', [1250 350 1310 410]);
 add_block('simulink/Sinks/Scope', modelName + "/Scope tensao", ...
-    'Position', [1040 570 1100 630]);
-add_block('simulink/Sinks/To Workspace', modelName + "/Salvar psi", ...
-    'VariableName', 'simPsi', 'SaveFormat', 'Timeseries', ...
-    'Position', [1240 420 1335 450]);
-add_block('simulink/Sinks/To Workspace', modelName + "/Salvar psiDot", ...
-    'VariableName', 'simPsiDot', 'SaveFormat', 'Timeseries', ...
-    'Position', [1110 420 1210 450]);
-add_block('simulink/Sinks/To Workspace', modelName + "/Salvar psiDDot", ...
-    'VariableName', 'simPsiDDot', 'SaveFormat', 'Timeseries', ...
-    'Position', [980 420 1085 450]);
-add_block('simulink/Sinks/To Workspace', modelName + "/Salvar tensao", ...
-    'VariableName', 'simTension', 'SaveFormat', 'Timeseries', ...
-    'Position', [1040 665 1145 695]);
+    'Position', [1100 640 1160 700]);
+addWorkspaceSink(modelName, 'psi', 'simPsi', [1190 490]);
+addWorkspaceSink(modelName, 'psiDot', 'simPsiDot', [1065 490]);
+addWorkspaceSink(modelName, 'psiDDot', 'simPsiDDot', [940 490]);
+addWorkspaceSink(modelName, 'tensao', 'simTension', [1090 745]);
+addWorkspaceSink(modelName, 'alpha', 'simAlpha', [250 15]);
+addWorkspaceSink(modelName, 'alphaDDot', 'simAlphaDDot', [250 120]);
+addWorkspaceSink(modelName, 'beta', 'simBeta', [250 260]);
+addWorkspaceSink(modelName, 'betaDDot', 'simBetaDDot', [250 305]);
 
-% Signal connections.
-connect(modelName, 'Tempo t/1', 'betaRate/1');
-connect(modelName, 'betaRate/1', 'beta(t)/1');
-connect(modelName, 'beta0/1', 'beta(t)/2');
-connect(modelName, 'beta(t)/1', 'sin(beta)/1');
-connect(modelName, 'sin(beta)/1', 'sin(beta) cos(psi)/1');
-connect(modelName, 'sin(beta)/1', 'sin(beta) sin(psi)/1');
+% Signal connections: motion.
+for name = ["alpha","alphaDot","alphaDDot","beta","betaDot","betaDDot"]
+    connect(modelName, 'Tempo t/1', name + "/1");
+end
+connect(modelName, 'beta/1', 'sin(beta)/1');
+connect(modelName, 'beta/1', 'cos(beta)/1');
+connect(modelName, 'alphaDot/1', 'Omega/1');
+connect(modelName, 'betaDot/1', 'Omega/2');
+connect(modelName, 'Omega/1', 'Omega squared/1');
+connect(modelName, 'Omega/1', 'Omega squared/2');
+connect(modelName, 'alphaDot/1', 'alphaDot squared/1');
+connect(modelName, 'alphaDot/1', 'alphaDot squared/2');
+connect(modelName, 'alphaDot squared/1', 'alphaDot2 sin(beta)/1');
+connect(modelName, 'sin(beta)/1', 'alphaDot2 sin(beta)/2');
+connect(modelName, 'alphaDDot/1', 'alphaDDot cos(beta)/1');
+connect(modelName, 'cos(beta)/1', 'alphaDDot cos(beta)/2');
+connect(modelName, 'alphaDot2 sin(beta)/1', 'Aceleracao tangencial C/1');
+connect(modelName, 'alphaDDot cos(beta)/1', 'Aceleracao tangencial C/2');
+connect(modelName, 'Aceleracao tangencial C/1', 'Multiplicar por b/1');
 
+% Signal connections: equation.
 connect(modelName, 'Integrador psi/1', 'sin(psi)/1');
 connect(modelName, 'Integrador psi/1', 'cos(psi)/1');
 connect(modelName, 'sin(psi)/1', 'l sin(psi)/1');
 connect(modelName, 'l sin(psi)/1', 'rho/1');
 connect(modelName, 'raio r/1', 'rho/2');
-connect(modelName, 'rho/1', 'Omega squared/1');
 connect(modelName, 'Omega squared/1', 'Termo centrifugo/1');
-connect(modelName, 'cos(psi)/1', 'Termo centrifugo/2');
+connect(modelName, 'rho/1', 'Termo centrifugo/2');
+connect(modelName, 'cos(psi)/1', 'Termo centrifugo/3');
 connect(modelName, 'sin(psi)/1', 'Termo gravitacional/1');
-connect(modelName, 'cos(psi)/1', 'sin(beta) cos(psi)/2');
-connect(modelName, 'sin(beta) cos(psi)/1', 'Termo do braco/1');
+connect(modelName, 'Multiplicar por b/1', 'Termo do braco/1');
+connect(modelName, 'cos(psi)/1', 'Termo do braco/2');
 connect(modelName, 'Termo centrifugo/1', 'Equacao dinamica/1');
 connect(modelName, 'Termo gravitacional/1', 'Equacao dinamica/2');
 connect(modelName, 'Termo do braco/1', 'Equacao dinamica/3');
@@ -159,21 +179,24 @@ connect(modelName, 'Equacao dinamica/1', 'Dividir por l/1');
 connect(modelName, 'Dividir por l/1', 'Integrador psiDot/1');
 connect(modelName, 'Integrador psiDot/1', 'Integrador psi/1');
 
-connect(modelName, 'cos(psi)/1', 'g cos(psi)/1');
-connect(modelName, 'sin(psi)/1', 'sin(beta) sin(psi)/2');
-connect(modelName, 'sin(beta) sin(psi)/1', 'Braco tensao/1');
-connect(modelName, 'rho/1', 'rho sin(psi)/1');
-connect(modelName, 'sin(psi)/1', 'rho sin(psi)/2');
-connect(modelName, 'rho sin(psi)/1', 'Centrifuga tensao/1');
+% Signal connections: tension.
+connect(modelName, 'Multiplicar por b/1', 'braco sin(psi)/1');
+connect(modelName, 'sin(psi)/1', 'braco sin(psi)/2');
+connect(modelName, 'braco sin(psi)/1', 'Sinal braco tensao/1');
+connect(modelName, 'Omega squared/1', 'centrifuga tensao/1');
+connect(modelName, 'rho/1', 'centrifuga tensao/2');
+connect(modelName, 'sin(psi)/1', 'centrifuga tensao/3');
 connect(modelName, 'Integrador psiDot/1', 'psiDot squared/1');
 connect(modelName, 'Integrador psiDot/1', 'psiDot squared/2');
-connect(modelName, 'psiDot squared/1', 'Tangencial tensao/1');
+connect(modelName, 'psiDot squared/1', 'l psiDot squared/1');
+connect(modelName, 'cos(psi)/1', 'g cos(psi)/1');
 connect(modelName, 'g cos(psi)/1', 'Soma tensao especifica/1');
-connect(modelName, 'Braco tensao/1', 'Soma tensao especifica/2');
-connect(modelName, 'Centrifuga tensao/1', 'Soma tensao especifica/3');
-connect(modelName, 'Tangencial tensao/1', 'Soma tensao especifica/4');
+connect(modelName, 'Sinal braco tensao/1', 'Soma tensao especifica/2');
+connect(modelName, 'centrifuga tensao/1', 'Soma tensao especifica/3');
+connect(modelName, 'l psiDot squared/1', 'Soma tensao especifica/4');
 connect(modelName, 'Soma tensao especifica/1', 'Tensao T/1');
 
+% Signal connections: diagnostics.
 connect(modelName, 'Dividir por l/1', 'Mux estados/1');
 connect(modelName, 'Integrador psiDot/1', 'Mux estados/2');
 connect(modelName, 'Integrador psi/1', 'Mux estados/3');
@@ -183,34 +206,69 @@ connect(modelName, 'Integrador psi/1', 'Salvar psi/1');
 connect(modelName, 'Integrador psiDot/1', 'Salvar psiDot/1');
 connect(modelName, 'Dividir por l/1', 'Salvar psiDDot/1');
 connect(modelName, 'Tensao T/1', 'Salvar tensao/1');
+connect(modelName, 'alpha/1', 'Salvar alpha/1');
+connect(modelName, 'alphaDDot/1', 'Salvar alphaDDot/1');
+connect(modelName, 'beta/1', 'Salvar beta/1');
+connect(modelName, 'betaDDot/1', 'Salvar betaDDot/1');
 
-% Visual organization and explanatory annotations.
 set_param(modelName + "/Tempo t", 'BackgroundColor', 'lightBlue');
 set_param(modelName + "/Integrador psiDot", 'BackgroundColor', 'yellow');
 set_param(modelName + "/Integrador psi", 'BackgroundColor', 'yellow');
 set_param(modelName + "/Equacao dinamica", 'BackgroundColor', 'green');
 set_param(modelName + "/Tensao T", 'BackgroundColor', 'orange');
 addAnnotation(modelName, ...
-    'ENTRADA PRESCRITA: beta(t) = beta0 + betaRate*t', ...
-    [35 25 345 45], 'blue');
+    'MOVIMENTOS PRESCRITOS: angulo, velocidade e aceleracao consistentes', ...
+    [25 0 515 20], 'blue');
 addAnnotation(modelName, ...
-    'DINAMICA: psiDDot = [centrifugo - gravidade - excitacao do braco]/l', ...
-    [590 205 1030 225], 'darkGreen');
+    'DINAMICA DE psi: centrifuga - gravidade - aceleracao tangencial do braco', ...
+    [540 280 1040 300], 'darkGreen');
 addAnnotation(modelName, ...
-    'ESTADOS: integrar psiDDot produz psiDot; integrar psiDot produz psi', ...
-    [920 235 1270 255], 'black');
-addAnnotation(modelName, ...
-    'DIAGNOSTICO: T deve permanecer positiva para uma haste/fio tracionado', ...
-    [505 790 1020 810], 'red');
+    'betaDDot atua na direcao X2 e nas reacoes; nao se projeta na equacao escalar de psi', ...
+    [385 855 1010 875], 'red');
 
 set_param(modelName, 'ZoomFactor', 'FitSystem');
 save_system(modelName, modelPath);
-
 if openAfterBuild
     open_system(modelName);
 else
     close_system(modelName, 0);
 end
+end
+
+function addMotionFcn(modelName, name, profile, position, derivative)
+arguments
+    modelName
+    name
+    profile
+    position
+    derivative = 0
+end
+modelName = string(modelName);
+name = string(name);
+profile = string(profile);
+switch derivative
+    case 0
+        expression = profile + ".initialAngle + " + profile + ".meanRate*u + " + ...
+            profile + ".amplitude*(sin(" + profile + ".frequency*u + " + ...
+            profile + ".phase) - sin(" + profile + ".phase))";
+    case 1
+        expression = profile + ".meanRate + " + profile + ".amplitude*" + ...
+            profile + ".frequency*cos(" + profile + ".frequency*u + " + ...
+            profile + ".phase)";
+    case 2
+        expression = "-" + profile + ".amplitude*" + profile + ...
+            ".frequency^2*sin(" + profile + ".frequency*u + " + ...
+            profile + ".phase)";
+end
+add_block('simulink/User-Defined Functions/Fcn', modelName + "/" + name, ...
+    'Expr', char(expression), ...
+    'Position', [position(1) position(2) position(1)+115 position(2)+30]);
+end
+
+function addWorkspaceSink(modelName, name, variable, position)
+add_block('simulink/Sinks/To Workspace', modelName + "/Salvar " + name, ...
+    'VariableName', variable, 'SaveFormat', 'Timeseries', ...
+    'Position', [position(1) position(2) position(1)+105 position(2)+30]);
 end
 
 function connect(modelName, source, destination)
