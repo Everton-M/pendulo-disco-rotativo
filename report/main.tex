@@ -79,9 +79,10 @@ Simulink, Simscape Multibody e CAD 3D.
 
 \section{Resultado da auditoria}
 
-A resolução manuscrita fornecida foi confrontada com uma derivação independente.
-Com as convenções de sinais adotadas na resolução, o resultado final está
-\textbf{correto}:
+A equação diferencial a seguir foi obtida por derivação independente e coincide
+com o resultado final da resolução manuscrita, desde que sejam adotadas as
+convenções geométricas explicitadas neste relatório -- em particular, $r$ como
+distância radial e $h$ como deslocamento vertical:
 \begin{equation}
 \boxed{
 l\ddot\psi+g\sin\psi
@@ -94,7 +95,7 @@ $\alpha(t)=\alpha_0+\dot\alpha t$ e
 $\beta(t)=\beta_0+\dot\beta t$; em particular, o termo $\sin\beta(t)$ torna
 \cref{eq:eom} explicitamente dependente do tempo quando $\dot\beta\neq0$.
 
-Três pontos de notação devem ficar explícitos para evitar erros na passagem ao
+Quatro pontos de notação devem ficar explícitos para evitar erros na passagem ao
 modelo físico:
 \begin{enumerate}
   \item $r$ é a distância radial, no plano do disco, entre o eixo em $C$ e o
@@ -124,7 +125,7 @@ braço, $B2$ ao disco e $B3$ à haste. A massa $m$ é concentrada na partícula 
     \coordinate (B) at (3,0);
     \coordinate (D) at (3,1.8);
     \fill (A) circle (2pt) node[below left] {$A$};
-    \fill (B) circle (2pt) node[below right] {$B\equiv C$};
+    \fill (B) circle (2pt) node[below right] {$B$ ($C$ em projeção)};
     \fill (D) circle (2pt) node[above right] {$D$};
     \draw[very thick,navy] (A)--node[below] {$b$}(B);
     \draw[very thick,blue] (B)--node[right] {$r$}(D);
@@ -157,8 +158,10 @@ braço, $B2$ ao disco e $B3$ à haste. A massa $m$ é concentrada na partícula 
     \draw[<->,gray] (D2)--node[above] {$l\sin\psi$}(3.2,1.1);
   \end{scope}
 \end{tikzpicture}
-\caption{Esquema autoral simplificado. O raio instantâneo da massa em relação
-ao eixo do disco é $\rho=r+l\sin\psi$; sua altura inclui $c+h$.}
+\caption{Esquema autoral simplificado. Na vista superior, $B$ e $C$ têm a
+mesma projeção horizontal, mas são separados pelo deslocamento vertical $c$.
+O raio instantâneo da massa em relação ao eixo do disco é
+$\rho=r+l\sin\psi$; sua altura absoluta inclui $a+c+h$.}
 \label{fig:geometry}
 \end{figure}
 
@@ -472,8 +475,9 @@ equações multicorpos.
 
 \section{Conclusão}
 
-A equação diferencial obtida na resolução é consistente com a cinemática e com
-o equilíbrio dinâmico. Sua não linearidade vem dos produtos trigonométricos e
+A derivação independente apresentada neste relatório fornece uma equação
+diferencial consistente com a cinemática e com o equilíbrio dinâmico do
+modelo ideal. Sua não linearidade vem dos produtos trigonométricos e
 da dependência do raio $r+l\sin\psi$ com a configuração. Além disso, o termo
 $\sin\beta(t)$ gera excitação periódica. A estrutura MATLAB entregue mantém o
 modelo físico separado do método numérico, compara RK4 com \texttt{ode45} e
