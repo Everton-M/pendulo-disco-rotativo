@@ -1,0 +1,26 @@
+function validateParameters(p)
+%VALIDATEPARAMETERS Check model inputs before numerical integration.
+
+required = {'a','b','c','r','h','l','m','g','alpha0','beta0', ...
+    'alphaRate','betaRate','psi0','psiRate0','damping','appliedTorque'};
+missing = required(~isfield(p, required));
+assert(isempty(missing), 'rotpend:MissingParameter', ...
+    'Missing parameter(s): %s', strjoin(missing, ', '));
+
+finiteScalars = required(1:end-1);
+for k = 1:numel(finiteScalars)
+    value = p.(finiteScalars{k});
+    assert(isnumeric(value) && isscalar(value) && isfinite(value), ...
+        'rotpend:InvalidParameter', '%s must be a finite scalar.', finiteScalars{k});
+end
+
+assert(p.a >= 0 && p.b > 0 && p.c >= 0 && p.r >= 0 && p.h >= 0 && p.l > 0, ...
+    'rotpend:InvalidGeometry', ...
+    'Lengths must satisfy a,c,r,h >= 0 and b,l > 0.');
+assert(p.m > 0 && p.g > 0, 'rotpend:InvalidPhysicalParameter', ...
+    'Mass and gravitational acceleration must be positive.');
+assert(p.damping >= 0, 'rotpend:InvalidDamping', ...
+    'Damping must be nonnegative.');
+assert(isa(p.appliedTorque, 'function_handle'), 'rotpend:InvalidTorque', ...
+    'appliedTorque must be a function handle @(t,x).');
+end

@@ -1,0 +1,32 @@
+# MATLAB generated files
+*.asv
+*.autosave
+*.m~
+slprj/
+codegen/
+*.slxc
+
+# LaTeX generated files
+report/build/
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+
+# Generated simulation outputs
+results/*.fig
+results/*.mat
+results/*.png
+!results/.gitkeep
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

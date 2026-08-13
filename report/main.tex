@@ -1,0 +1,509 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{margin=25mm}
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{siunitx}
+\sisetup{per-mode=symbol}
+\usepackage{booktabs,tabularx,array}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,angles,quotes,calc}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+\definecolor{navy}{HTML}{17365D}
+\definecolor{blue}{HTML}{2E75B6}
+\definecolor{lightblue}{HTML}{D9EAF7}
+\definecolor{codegreen}{HTML}{287A3D}
+\definecolor{codegray}{HTML}{5B6573}
+\hypersetup{colorlinks=true,linkcolor=navy,urlcolor=blue,citecolor=navy}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Dinâmica não linear}
+\rhead{Pêndulo em disco rotativo}
+\cfoot{\thepage}
+\setlength{\headheight}{14pt}
+
+\lstdefinestyle{matlab}{
+  language=Matlab,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{codegreen},
+  stringstyle=\color{purple},
+  numbers=left,
+  numberstyle=\tiny\color{codegray},
+  frame=single,
+  rulecolor=\color{lightblue},
+  breaklines=true,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+\newcommand{\bvec}[1]{\bm{#1}}
+\newcommand{\R}[2]{{}^{#1}\!\bvec R_{#2}}
+\newcommand{\vct}[2]{{}^{#1}\!\bvec{#2}}
+\newcommand{\Om}{\Omega}
+
+\title{\textbf{Dinâmica de um Pêndulo Montado em Disco Rotativo}\\
+\large Derivação, auditoria, integração numérica e correspondência física}
+\author{Ilmar Santos}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Este relatório formaliza a solução de um sistema com três rotações consecutivas:
+um braço gira com velocidade angular constante, um disco gira em relação ao
+braço e uma haste pendular possui movimento livre. São apresentadas as
+transformações de coordenadas, velocidades e acelerações angulares, aceleração
+da massa, diagrama de corpo livre e equação diferencial não linear. A derivação
+é ligada a uma implementação MATLAB modular, com o método de Runge--Kutta de
+quarta ordem, comparação com \texttt{ode45}, grandezas de pós-processamento e
+testes. O objetivo é produzir uma base rastreável para um modelo posterior em
+Simulink, Simscape Multibody e CAD 3D.
+\end{abstract}
+
+\tableofcontents
+
+\section{Resultado da auditoria}
+
+A resolução manuscrita fornecida foi confrontada com uma derivação independente.
+Com as convenções de sinais adotadas na resolução, o resultado final está
+\textbf{correto}:
+\begin{equation}
+\boxed{
+l\ddot\psi+g\sin\psi
++b\dot\alpha^{\,2}\sin\beta\cos\psi
+-(\dot\alpha+\dot\beta)^2\bigl(r+l\sin\psi\bigr)\cos\psi=0.}
+\label{eq:eom}
+\end{equation}
+Aqui, somente $\dot\alpha$ e $\dot\beta$ são constantes. Portanto,
+$\alpha(t)=\alpha_0+\dot\alpha t$ e
+$\beta(t)=\beta_0+\dot\beta t$; em particular, o termo $\sin\beta(t)$ torna
+\cref{eq:eom} explicitamente dependente do tempo quando $\dot\beta\neq0$.
+
+Três pontos de notação devem ficar explícitos para evitar erros na passagem ao
+modelo físico:
+\begin{enumerate}
+  \item $r$ é a distância radial, no plano do disco, entre o eixo em $C$ e o
+  pivô em $D$;
+  \item $h$ é a distância vertical de $C$ a $D$. Assim, a coordenada vertical
+  de $B$ a $D$ é $c+h$, e a de $O$ a $D$ é $a+c+h$;
+  \item $a$, $c$ e $h$ são deslocamentos verticais constantes: afetam a posição
+  absoluta, mas não a equação dinâmica ideal;
+  \item o giro absoluto do disco é
+  $\Om=\dot\alpha+\dot\beta$, pois os dois primeiros giros ocorrem em torno de
+  eixos verticais paralelos.
+\end{enumerate}
+
+\section{Descrição física e hipóteses}
+
+O referencial inercial $I$ tem origem em $O$. As bases móveis $B1$, $B2$ e $B3$
+têm origens em $B$, $C$ e $D$, respectivamente. A base $B1$ é solidária ao
+braço, $B2$ ao disco e $B3$ à haste. A massa $m$ é concentrada na partícula $E$.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[>=Latex,scale=0.95,every node/.style={font=\small}]
+  % top view
+  \begin{scope}[xshift=-4.8cm]
+    \node[font=\bfseries] at (1.7,3.0) {Vista superior};
+    \coordinate (A) at (0,0);
+    \coordinate (B) at (3,0);
+    \coordinate (D) at (3,1.8);
+    \fill (A) circle (2pt) node[below left] {$A$};
+    \fill (B) circle (2pt) node[below right] {$B\equiv C$};
+    \fill (D) circle (2pt) node[above right] {$D$};
+    \draw[very thick,navy] (A)--node[below] {$b$}(B);
+    \draw[very thick,blue] (B)--node[right] {$r$}(D);
+    \draw[->] (A)--++(1.2,0) node[below] {$\bvec i_1$};
+    \draw[->] (B)--++(0,1.2) node[left] {$\bvec j_2$};
+    \draw[dashed] (A)--++(0,2.2);
+    \draw[->] ($(A)+(0,0.65)$) arc[start angle=90,end angle=25,radius=0.65];
+    \node at (0.65,0.75) {$\alpha$};
+    \draw[->] ($(B)+(0.65,0)$) arc[start angle=0,end angle=70,radius=0.65];
+    \node at (3.75,0.65) {$\beta$};
+  \end{scope}
+  % vertical section
+  \begin{scope}[xshift=2.1cm]
+    \node[font=\bfseries] at (2.0,3.0) {Seção no plano $Y_2Z_2$};
+    \coordinate (C2) at (0,0);
+    \coordinate (P2) at (2.1,0);
+    \coordinate (D2) at (2.1,1.1);
+    \coordinate (E2) at (3.2,-1.15);
+    \fill (C2) circle (2pt) node[below left] {$C$};
+    \fill (D2) circle (2pt) node[above] {$D$};
+    \fill (E2) circle (3pt) node[right] {$E,m$};
+    \draw[very thick,blue] (C2)--node[below] {$r$}(P2);
+    \draw[very thick,blue] (P2)--node[right] {$h$}(D2);
+    \draw[very thick,navy] (D2)--node[right] {$l$}(E2);
+    \draw[dashed] (D2)--++(0,-2.6);
+    \draw[->] (C2)--++(3.8,0) node[right] {$Y_2$};
+    \draw[->] (C2)--++(0,2.0) node[above] {$Z_2$};
+    \draw[->] ($(D2)+(0,-0.75)$) arc[start angle=-90,end angle=-64,radius=0.75];
+    \node at (2.35,0.20) {$\psi$};
+    \draw[<->,gray] (D2)--node[above] {$l\sin\psi$}(3.2,1.1);
+  \end{scope}
+\end{tikzpicture}
+\caption{Esquema autoral simplificado. O raio instantâneo da massa em relação
+ao eixo do disco é $\rho=r+l\sin\psi$; sua altura inclui $c+h$.}
+\label{fig:geometry}
+\end{figure}
+
+As hipóteses do modelo-base são:
+\begin{itemize}
+  \item haste rígida e sem massa; partícula $E$ pontual;
+  \item vínculos ideais e ausência de folgas;
+  \item gravidade uniforme, $\bvec g=-g\bvec k$;
+  \item $\dot\alpha$ e $\dot\beta$ impostas por atuadores ideais e constantes;
+  \item ausência de amortecimento e torque externo na derivação original.
+\end{itemize}
+
+Os vetores geométricos são
+\begin{align}
+\vct{B1}{r}_{AB}&=\begin{bmatrix}b&0&0\end{bmatrix}^{\!T}, &
+\vct{B1}{r}_{BC}&=\begin{bmatrix}0&0&c\end{bmatrix}^{\!T},\\
+\vct{B2}{r}_{CD}&=\begin{bmatrix}0&r&h\end{bmatrix}^{\!T}, &
+\vct{B3}{r}_{DE}&=\begin{bmatrix}0&0&-l\end{bmatrix}^{\!T}.
+\end{align}
+
+\section{Transformações de coordenadas}
+
+Adota-se a convenção passiva: $\R{A}{B}$ transforma componentes expressas em
+$B$ para componentes expressas em $A$. Assim,
+\begin{align}
+\R{B1}{I}&=
+\begin{bmatrix}
+\cos\alpha&\sin\alpha&0\\-\sin\alpha&\cos\alpha&0\\0&0&1
+\end{bmatrix},\\
+\R{B2}{B1}&=
+\begin{bmatrix}
+\cos\beta&\sin\beta&0\\-\sin\beta&\cos\beta&0\\0&0&1
+\end{bmatrix},\\
+\R{B3}{B2}&=
+\begin{bmatrix}
+1&0&0\\0&\cos\psi&\sin\psi\\0&-\sin\psi&\cos\psi
+\end{bmatrix}.
+\label{eq:rotations}
+\end{align}
+Para retornar ao referencial inercial, usa-se a transposta da matriz composta,
+pois matrizes de rotação são ortogonais.
+
+\section{Velocidades e acelerações angulares}
+
+Definindo $\Om=\dot\alpha+\dot\beta$, obtêm-se
+\begin{align}
+\vct{B1}{\omega}_1&=\begin{bmatrix}0&0&\dot\alpha\end{bmatrix}^{T},\\
+\vct{B2}{\omega}_2&=\begin{bmatrix}0&0&\Om\end{bmatrix}^{T},\\
+\vct{B3}{\omega}_3&=
+\begin{bmatrix}\dot\psi&\Om\sin\psi&\Om\cos\psi\end{bmatrix}^{T}.
+\end{align}
+Como as duas primeiras taxas são constantes,
+\begin{align}
+\vct{B1}{\dot\omega}_1&=\bvec0, &
+\vct{B2}{\dot\omega}_2&=\bvec0,\\
+\vct{B3}{\dot\omega}_3&=
+\begin{bmatrix}
+\ddot\psi&\Om\dot\psi\cos\psi&-\Om\dot\psi\sin\psi
+\end{bmatrix}^{T}.
+\end{align}
+
+\section{Aceleração linear da partícula}
+
+A aceleração do ponto $B$, inicialmente expressa em $B1$, é puramente
+centrípeta:
+\begin{equation}
+\vct{B1}{a}_B=\begin{bmatrix}-b\dot\alpha^2&0&0\end{bmatrix}^{T}.
+\end{equation}
+Os deslocamentos verticais $BC=c\bvec k$ e $h\bvec k_2$ são paralelos ao eixo de rotação. Logo,
+$\bvec a_C=\bvec a_B$. Em $B2$,
+\begin{equation}
+\vct{B2}{a}_C=
+\begin{bmatrix}
+-b\dot\alpha^2\cos\beta\\
+b\dot\alpha^2\sin\beta\\0
+\end{bmatrix}.
+\end{equation}
+
+Aplicando a fórmula de aceleração de um ponto de um corpo rígido e incluindo o
+movimento relativo associado a $\psi$, chega-se a
+\begin{equation}
+\vct{B2}{a}_E=
+\begin{bmatrix}
+-b\dot\alpha^2\cos\beta-2l\Om\dot\psi\cos\psi\\
+b\dot\alpha^2\sin\beta-\Om^2(r+l\sin\psi)
++l\ddot\psi\cos\psi-l\dot\psi^2\sin\psi\\
+l\ddot\psi\sin\psi+l\dot\psi^2\cos\psi
+\end{bmatrix}.
+\label{eq:acceleration-b2}
+\end{equation}
+O primeiro termo adicional na componente $X_2$ é de Coriolis. O termo
+$\Om^2(r+l\sin\psi)$ é centrípeto e revela diretamente por que $r$ precisa ser
+uma dimensão radial.
+
+Transformando \cref{eq:acceleration-b2} para $B3$, as componentes relevantes ao
+diagrama de corpo livre tornam-se
+\begin{align}
+\vct{B3}{a}_{E,y}&=
+b\dot\alpha^2\sin\beta\cos\psi+l\ddot\psi
+-\Om^2(r+l\sin\psi)\cos\psi,\label{eq:ay3}\\
+\vct{B3}{a}_{E,z}&=
+-b\dot\alpha^2\sin\beta\sin\psi+l\dot\psi^2
++\Om^2(r+l\sin\psi)\sin\psi.\label{eq:az3}
+\end{align}
+
+\section{Diagrama de corpo livre e equação de movimento}
+
+Sobre a partícula atuam a tração $T\bvec k_3$ e o peso. Em $B3$,
+\begin{equation}
+\vct{B3}{F}=
+\begin{bmatrix}0\\-mg\sin\psi\\T-mg\cos\psi\end{bmatrix}.
+\end{equation}
+Na direção $Y_3$, a segunda lei de Newton combinada com \cref{eq:ay3} fornece
+diretamente \cref{eq:eom}. Na direção $Z_3$, obtém-se a força de tração:
+\begin{equation}
+\boxed{T=m\left[g\cos\psi-b\dot\alpha^2\sin\beta\sin\psi
++\Om^2(r+l\sin\psi)\sin\psi+l\dot\psi^2\right].}
+\label{eq:tension}
+\end{equation}
+Se \cref{eq:tension} resultar em $T<0$, um fio real ficaria frouxo. Nesse caso,
+o vínculo de pêndulo sempre tracionado deixa de ser válido e deve ser substituído
+por um modelo híbrido com perda e retomada de contato.
+
+\section{Forma de estado e extensão não ideal}
+
+Com $x_1=\psi$ e $x_2=\dot\psi$, a equação ideal é escrita como
+\begin{align}
+\dot x_1&=x_2,\\
+\dot x_2&=\frac{1}{l}\left[
+\Om^2(r+l\sin x_1)\cos x_1-g\sin x_1
+-b\dot\alpha^2\sin\beta(t)\cos x_1\right].
+\label{eq:state}
+\end{align}
+O código acrescenta parâmetros opcionais: amortecimento viscoso $d$ no pivô e
+torque aplicado $\tau(t,\bvec x)$. Nesse caso,
+\begin{equation}
+l\ddot\psi+g\sin\psi+b\dot\alpha^2\sin\beta\cos\psi
+-\Om^2(r+l\sin\psi)\cos\psi
++\frac{d}{ml}\dot\psi-\frac{\tau}{ml}=0.
+\end{equation}
+
+A linearização em torno de $\psi\approx0$ produz, no caso ideal,
+\begin{equation}
+l\ddot\psi+(g-l\Om^2)\psi
+=\Om^2r-b\dot\alpha^2\sin\beta(t).
+\end{equation}
+Essa aproximação evidencia a excitação periódica causada pelo braço e a redução
+da rigidez efetiva quando $\Om^2$ se aproxima de $g/l$. Ela é útil para análise,
+mas não substitui o modelo não linear em grandes ângulos.
+
+\section{Integração numérica}
+
+Para um sistema genérico $\dot{\bvec x}=\bvec f(t,\bvec x)$, o RK4 clássico usa
+\begin{align}
+\bvec k_1&=\bvec f(t_n,\bvec x_n),\\
+\bvec k_2&=\bvec f(t_n+\tfrac{\Delta t}{2},
+\bvec x_n+\tfrac{\Delta t}{2}\bvec k_1),\\
+\bvec k_3&=\bvec f(t_n+\tfrac{\Delta t}{2},
+\bvec x_n+\tfrac{\Delta t}{2}\bvec k_2),\\
+\bvec k_4&=\bvec f(t_n+\Delta t,\bvec x_n+\Delta t\bvec k_3),\\
+\bvec x_{n+1}&=\bvec x_n+\frac{\Delta t}{6}
+(\bvec k_1+2\bvec k_2+2\bvec k_3+\bvec k_4).
+\end{align}
+O erro global é de ordem $\mathcal O(\Delta t^4)$. O projeto compara esse
+integrador de passo fixo com o \texttt{ode45}, um método adaptativo adequado
+como referência para este problema não rígido. Se o modelo futuro incluir
+contato muito rígido, saturações rápidas ou flexibilidade estrutural, devem ser
+avaliados \texttt{ode15s} e métodos próprios para sistemas multicorpos.
+
+\section{Arquitetura MATLAB}
+
+O código separa responsabilidades:
+\begin{itemize}
+  \item \texttt{+rotpend}: parâmetros, equação de estado, cinemática e simulação;
+  \item \texttt{+numerics}: integrador RK4 genérico, sem dependência do modelo;
+  \item \texttt{+post}: gráficos e trajetória absoluta;
+  \item \texttt{tests}: casos-limite, resíduo e convergência;
+  \item \texttt{run\_simulation.m}: configuração reproduzível e exportação.
+\end{itemize}
+
+A implementação direta da equação de estado é:
+\lstinputlisting[style=matlab,caption={Função do lado direito do sistema não linear.},
+label={lst:rhs}]{../matlab/+rotpend/rhs.m}
+
+O integrador educacional é independente do pêndulo:
+\lstinputlisting[style=matlab,caption={Runge--Kutta clássico de quarta ordem.},
+label={lst:rk4}]{../matlab/+numerics/rk4.m}
+
+\section{Validação e rastreabilidade}
+
+Antes de comparar com CAD ou bancada, recomenda-se a seguinte sequência:
+\begin{enumerate}
+  \item \textbf{Unidades:} todos os termos de \cref{eq:eom} têm unidade de
+  aceleração, \si{m.s^{-2}}.
+  \item \textbf{Caso-limite:} com $\dot\alpha=\dot\beta=0$, recupera-se
+  $\ddot\psi=-(g/l)\sin\psi$.
+  \item \textbf{Resíduo:} substituir a aceleração calculada na equação e exigir
+  resíduo próximo da precisão de máquina.
+  \item \textbf{Convergência:} reduzir $\Delta t$ à metade; no regime assintótico,
+  o erro do RK4 deve cair aproximadamente por um fator 16.
+  \item \textbf{Solver cruzado:} comparar RK4 e \texttt{ode45} nos mesmos
+  instantes de amostragem.
+  \item \textbf{Vínculo:} verificar numericamente
+  $\lVert\bvec r_E-\bvec r_D\rVert=l$ e monitorar $T\ge0$.
+  \item \textbf{Modelo 3D:} comparar posição, velocidade e aceleração de $E$ em
+  um mesmo referencial, não apenas o ângulo $\psi$.
+\end{enumerate}
+Como os motores impõem $\alpha(t)$ e $\beta(t)$, a energia mecânica da partícula
+não precisa ser conservada; usá-la como teste de conservação produziria uma
+conclusão incorreta. Ela continua útil para quantificar a energia transferida
+pelos atuadores.
+
+\section{Correspondência com Simulink e CAD}
+\subsection{Modelo Simulink por equações}
+
+Foi construído o modelo \texttt{rotating\_pendulum.slx}, mostrado na
+\cref{fig:simulink}. O diagrama mantém visíveis os três termos da equação
+dinâmica, realiza as duas integrações necessárias e calcula a tração como saída
+de diagnóstico.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{../docs/figures/simulink-diagram.png}
+\caption{Implementação da equação diferencial não linear em blocos Simulink.}
+\label{fig:simulink}
+\end{figure}
+
+O modelo usa \texttt{ode45} com passo variável, tolerâncias relativa e absoluta
+de $10^{-8}$ e $10^{-10}$ e passo máximo de \SI{0.01}{s}. A validação automática
+contra uma integração MATLAB independente produziu erros máximos de
+$5{,}73\times10^{-10}\,\si{rad}$ em $\psi$ e
+$2{,}48\times10^{-9}\,\si{rad.s^{-1}}$ em $\dot\psi$. A tração mínima foi
+\SI{2.456}{N} no caso demonstrativo.
+Com \texttt{ode4} e passo fixo de \SI{0.002}{s}, a comparação direta com o
+RK4 MATLAB apresentou erros de $2{,}39\times10^{-15}\,\si{rad}$ em $\psi$ e
+$1{,}02\times10^{-14}\,\si{rad.s^{-1}}$ em $\dot\psi$.
+
+Além do arquivo binário \texttt{.slx}, o projeto inclui um gerador programático
+que recria todos os blocos e conexões. Isso torna a arquitetura auditável no
+controle de versão e permite regenerar o modelo após alterações.
+\subsection{Modelo físico em Simscape Multibody}
+
+O modelo \texttt{rotating\_pendulum\_multibody.slx} representa a cadeia física
+por meio de transformações rígidas, três juntas de revolução, gravidade,
+atuadores de movimento e sensores. A massa $m$ é concentrada em $E$; os sólidos
+coloridos que representam coluna, braço, disco, suporte e haste têm massa
+numérica desprezível, preservando as hipóteses da derivação.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{../docs/figures/multibody-diagram.png}
+\caption{Modelo físico paramétrico em Simscape Multibody.}
+\label{fig:multibody}
+\end{figure}
+
+Os movimentos de $\alpha$ e $\beta$ são impostos com posição, velocidade
+constante e aceleração nula fornecidas explicitamente. A junta de $\psi$ é
+livre e tem condição inicial igual à do modelo analítico. Uma transformação
+permuta os eixos para fazer o eixo padrão $Z$ da junta coincidir com $X_2$.
+
+A comparação de \SI{20}{s} com o modelo analítico apresentou erros máximos de
+$1{,}75\times10^{-8}\,\si{rad}$ em $\psi$,
+$7{,}62\times10^{-8}\,\si{rad.s^{-1}}$ em $\dot\psi$,
+$6{,}12\times10^{-9}\,\si{m}$ na posição de $E$ e
+$1{,}82\times10^{-8}\,\si{N}$ na tração. A força axial mínima foi
+\SI{2.456}{N}. A tração foi obtida projetando a força vetorial da junta na
+direção instantânea da haste.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.88\textwidth]{../docs/figures/multibody-validation.png}
+\caption{Comparação entre o modelo analítico e o Simscape Multibody.}
+\label{fig:multibody-validation}
+\end{figure}
+
+Na futura integração CAD, os sólidos paramétricos poderão ser substituídos por
+blocos \texttt{File Solid} ou por uma montagem importada com \texttt{smimport}.
+Os referenciais em $O$, $A$, $B$, $C$, $D$ e $E$, as direções das juntas e os
+sensores devem ser preservados. Ao ativar as massas e inércias reais das peças,
+a resposta deixará de coincidir com a equação de massa pontual, passando a
+representar o equipamento físico mais completo.
+
+\begin{table}[ht]
+\centering
+\caption{Mapeamento mínimo entre equações e montagem física.}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+Elemento & Modelo & Implementação física/virtual\\
+\midrule
+$OA$ & deslocamento $a\bvec k$ & coluna fixa\\
+$AB$ & comprimento $b$, giro $\alpha$ em $Z$ & braço e junta rotativa\\
+$BC$ & deslocamento $c\bvec k$ & suporte vertical\\
+$CD$ & $r\bvec j_2+h\bvec k_2$ & raio e altura do pivô no disco\\
+$DE$ & comprimento $l$, giro $\psi$ em $X_2$ & haste e junta pendular\\
+$E$ & massa pontual $m$ & massa concentrada/centro de massa\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+No Simulink algébrico, um bloco MATLAB Function calcula \cref{eq:state}; dois
+integradores em cascata geram $\dot\psi$ e $\psi$. Fontes do tipo rampa geram
+$\alpha$ e $\beta$. A tensão de \cref{eq:tension} e a posição absoluta são
+saídas de diagnóstico.
+
+No Simscape Multibody, as juntas devem respeitar exatamente os eixos da
+\cref{eq:rotations}. Recomenda-se exportar do CAD as massas, posições de centro
+de massa e tensores de inércia. Para reproduzir o modelo deste relatório, a
+haste deve ter massa desprezível e a massa deve ser concentrada em $E$; ao usar
+uma haste real, sua inércia deve entrar numa nova derivação por Lagrange ou por
+equações multicorpos.
+
+\section{Conclusão}
+
+A equação diferencial obtida na resolução é consistente com a cinemática e com
+o equilíbrio dinâmico. Sua não linearidade vem dos produtos trigonométricos e
+da dependência do raio $r+l\sin\psi$ com a configuração. Além disso, o termo
+$\sin\beta(t)$ gera excitação periódica. A estrutura MATLAB entregue mantém o
+modelo físico separado do método numérico, compara RK4 com \texttt{ode45} e
+expõe posição, aceleração, energia e tensão. O modelo físico Multibody
+reproduz essas grandezas e deixa preparada a substituição dos sólidos
+paramétricos por componentes CAD.
+
+\appendix
+\section{Parâmetros demonstrativos do código}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parâmetro & Valor inicial & Observação\\
+\midrule
+$a$ & \SI{0.30}{m} & apenas posição absoluta\\
+$b$ & \SI{0.50}{m} & comprimento do braço\\
+$c$ & \SI{0.10}{m} & apenas posição absoluta\\
+$r$ & \SI{0.20}{m} & raio no disco\\
+$h$ & \SI{0.15}{m} & altura de $C$ a $D$\\
+$l$ & \SI{0.35}{m} & comprimento do pêndulo\\
+$m$ & \SI{0.25}{kg} & massa concentrada\\
+$\dot\alpha$ & \SI{1.20}{rad.s^{-1}} & taxa prescrita\\
+$\dot\beta$ & \SI{2.00}{rad.s^{-1}} & taxa relativa prescrita\\
+\bottomrule
+\end{tabular}
+\end{table}
+Esses números servem somente para tornar o exemplo executável e não foram
+extraídos do enunciado. A identificação física deve substituí-los antes de
+qualquer comparação quantitativa.
+
+\end{document}
