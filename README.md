@@ -126,19 +126,19 @@ pendulo-disco-rotativo/
 │   └── tests/                 # testes automatizados
 ├── docs/                      # guias e figuras
 ├── report/
-│   ├── main.tex               # relatório técnico
+│   ├── rotating-disk-pendulum-dynamics.tex # relatório técnico
 │   └── example-10-worked-solution.pdf
 └── results/                   # saídas locais ignoradas pelo Git
 ```
 
 ## Relatório
 
-O arquivo `report/main.tex` contém a derivação completa e pode ser compilado no
+O arquivo `report/rotating-disk-pendulum-dynamics.tex` contém a derivação completa e pode ser compilado no
 Overleaf ou localmente com TeX Live/MiKTeX:
 
 ```text
 cd report
-latexmk -pdf main.tex
+latexmk -pdf rotating-disk-pendulum-dynamics.tex
 ```
 
 Os valores de `defaultParameters.m` são demonstrativos. Dados extraídos do CAD
