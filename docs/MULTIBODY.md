@@ -1,150 +1,114 @@
-# Modelo físico em Simscape Multibody
+# Modelo Simscape Multibody
 
-O arquivo `rotating_pendulum_multibody.slx` representa fisicamente o mesmo
-sistema da equação diferencial. Ele contém corpos visuais, referenciais,
-transformações rígidas, três juntas rotativas, gravidade, uma massa pontual em
-`E`, atuação dos motores e sensores.
+`rotating_pendulum_multibody.slx` é a representação física do mesmo sistema
+usado na EDO. O objetivo é conferir a cinemática em três dimensões e preparar a
+substituição dos sólidos simples por peças CAD.
 
 ![Diagrama Multibody](figures/multibody-diagram.png)
 
-## Como abrir e executar
-
-Na raiz do repositório:
+## Abrir e simular
 
 ```matlab
+cd('C:\Users\E\Documents\1 - Unicamp\7 - Projetos\pendulo-disco-rotativo')
 addpath('matlab')
 addpath('matlab/multibody')
 open_multibody_model
 ```
 
-Pressione **Run**. O Mechanics Explorer abrirá a visualização 3D. No diagrama,
-os scopes mostram os estados de `psi` e a posição absoluta de `E`.
-
-Para executar a verificação automática:
+Para executar a comparação automática:
 
 ```matlab
 report = validate_multibody_model()
 ```
 
-## Correspondência física
+## Cadeia física
 
-| Trecho | Transformação ou junta | Significado |
-|---|---|---|
-| `O -> A` | `[0 0 a]` | altura da coluna |
-| junta `alpha` | revoluta em `Z` | rotação absoluta do braço |
-| `A -> B` | `[b 0 0]` | comprimento do braço |
-| `B -> C` | `[0 0 c]` | elevação até o centro do disco |
-| junta `beta` | revoluta em `Z` | rotação do disco relativa ao braço |
-| `C -> D` | `[0 r h]` | raio e altura do pivô pendular |
-| junta `psi` | revoluta em `X2` | movimento livre do pêndulo |
-| `D -> E` | comprimento `l` | haste até a massa pontual |
-
-A junta do pêndulo usa uma transformação de eixos para que o eixo `Z` padrão
-da junta coincida com `X2`. No referencial auxiliar da junta:
+O modelo segue a sequência:
 
 ```text
-xJ = y2,   yJ = z2,   zJ = x2.
+World -> O-A -> junta alpha -> A-B -> B-C -> junta beta
+      -> C-D -> alinhamento do eixo -> junta psi -> D-E -> massa E
 ```
 
-Assim, a rotação positiva `psi` leva a massa na direção radial positiva e
-mantém a mesma convenção usada na derivação.
-
-## Atuação dos motores
-
-As juntas `alpha` e `beta` recebem movimentos prescritos:
+As transformações `O-A`, `B-C` e `C-D` representam a geometria. Em particular,
 
 ```text
-alpha(t) = alpha0 + alphaRate*t
-beta(t)  = beta0  + betaRate*t
+C-D = [0, r, h] em B2,
+z_D = a + c + h.
 ```
 
-Os conversores recebem explicitamente três sinais:
+A transformação anterior à junta `psi` alinha o eixo padrão `Z` do bloco com
+`X2`, eixo físico de oscilação da haste.
+
+## Movimento das juntas acionadas
+
+As juntas `alpha` e `beta` usam atuação por movimento. Cada conversor recebe
+três entradas coerentes:
 
 - posição angular;
-- velocidade angular constante;
-- aceleração angular nula.
+- velocidade angular;
+- aceleração angular.
 
-Fornecer as derivadas é importante. Estimá-las com um filtro faria os motores
-partirem temporariamente do repouso, introduzindo uma aceleração inicial que
-não existe na hipótese matemática e alterando a resposta do pêndulo.
+O caso demonstrativo usa os mesmos perfis harmônicos do MATLAB. Isso é
+importante em movimento acelerado: fornecer apenas posição e deixar o software
+estimar derivadas pode introduzir filtragem, atraso ou forças artificiais.
 
-## Massa e geometria
+A junta `psi` não recebe movimento imposto. Sua resposta resulta da gravidade,
+da inércia e do movimento da base.
 
-A derivação considera haste sem massa e partícula concentrada em `E`. Para
-reproduzir isso:
+## Sólidos e massa
 
-- o bloco `Massa pontual E` possui massa `p.m`;
-- coluna, braço, disco, suporte e haste têm massa numérica desprezível;
-- os sólidos coloridos existem principalmente para visualização.
+Coluna, braço, disco, suportes e haste são sólidos visuais com massa numérica
+muito pequena. A massa física é concentrada em `E`. Essa configuração reproduz
+a hipótese usada na EDO; ela não pretende representar ainda as inércias reais
+das peças.
 
-O Simscape requer propriedades de inércia válidas, por isso os sólidos visuais
-usam massa `1e-9 kg` e inércia `1e-12 kg*m^2`, em vez de zero exato.
-
-## Sensores e saídas
+## Sensores e blocos de saída
 
 O modelo exporta:
 
-| Variável | Conteúdo |
-|---|---|
-| `mbPsi` | ângulo do pêndulo |
-| `mbPsiDot` | velocidade angular do pêndulo |
-| `mbPsiDDot` | aceleração angular do pêndulo |
-| `mbAlpha`, `mbBeta` | movimentos efetivamente aplicados |
-| `mbPositionE` | posição absoluta 3D de `E` |
-| `mbJointForce` | força vetorial de reação na junta `D` |
+- `mbAlpha` e `mbBeta`: posições das juntas acionadas;
+- `mbPsi`, `mbPsiDot` e `mbPsiDDot`: estado da junta livre;
+- `mbPositionE`: posição absoluta da massa;
+- `mbJointForce`: reação vetorial no pivô `D`.
 
-A tração é a projeção de `mbJointForce` na direção instantânea da haste. Como
-a haste gira com `psi`, usar apenas uma componente cartesiana da força não é
-suficiente.
+As caixas visivelmente vazias são conversores `PS-Simulink`. Elas transformam
+sinais físicos do Simscape em sinais comuns do Simulink e estão corretas mesmo
+quando o ícone não mostra texto interno.
 
-## Resultados da validação
+## Validação
 
-A comparação de 20 s contra o modelo analítico produziu:
-
-```text
-erro máximo em psi:        1.748e-08 rad
-erro máximo em psiDot:     7.624e-08 rad/s
-erro máximo na posição E:  6.118e-09 m
-erro máximo na tração:     1.821e-08 N
-tração mínima:             2.456 N
-```
+O script resolve a EDO nos mesmos instantes da simulação física e compara
+ângulo, velocidade, aceleração, posição de `E` e força axial. A tração é obtida
+projetando a reação da junta na direção instantânea da haste.
 
 ![Comparação Multibody e equação](figures/multibody-validation.png)
 
-Essas diferenças são erros numéricos de solver, não uma divergência física.
+A validação também confere se as juntas `alpha` e `beta` reproduzem os perfis
+prescritos. No caso demonstrativo de 20 s, foram obtidos:
 
-## Substituição futura por CAD
+| Grandeza | erro máximo |
+|---|---:|
+| `psi` | `7.76e-9 rad` |
+| `psiDot` | `3.71e-8 rad/s` |
+| `psiDDot` | `1.74e-7 rad/s²` |
+| posição de `E` | `2.72e-9 m` |
+| tração | `1.15e-8 N` |
 
-Há duas estratégias possíveis.
+As juntas acionadas reproduziram `alpha` e `beta` até a precisão numérica, e a
+força axial mínima foi `2.458 N`.
 
-### Preservar as juntas atuais
+## Integração com CAD
 
-Exporte cada peça como STEP ou Parasolid e substitua os sólidos visuais por
-blocos `File Solid`. Mantenha os `Rigid Transform`, juntas, atuadores e sensores.
-Essa opção é controlada e funciona mesmo quando o CAD não exporta corretamente
-as relações da montagem.
+Há dois caminhos usuais:
 
-### Importar a montagem completa
+1. substituir cada sólido por um `File Solid`;
+2. importar uma montagem por `smimport` e reconectar as juntas.
 
-Com Simscape Multibody Link, exporte a montagem do SolidWorks/Creo e use
-`smimport` para criar outro modelo. Depois transfira para ele:
+Em ambos os casos, preserve os referenciais `O`, `A`, `B`, `C`, `D` e `E`, os
+eixos de rotação e a orientação de `C-D`. Depois, substitua massas e tensores de
+inércia demonstrativos pelos valores do CAD.
 
-- movimentos prescritos de `alpha` e `beta`;
-- sensores de `psi` e posição de `E`;
-- configuração da gravidade;
-- scripts de comparação deste projeto.
-
-Antes da importação, crie no CAD sistemas de coordenadas em `O`, `A`, `B`, `C`,
-`D` e `E`, com nomes claros. Os eixos de junta devem seguir `Z`, `Z` e `X2`.
-
-## Quando o CAD real muda a equação
-
-Ao substituir a massa pontual por peças reais, braço, disco e haste passam a
-ter massa e tensores de inércia. O modelo Multibody continuará simulando, mas
-deixará de coincidir com a equação ideal. Isso permite dois níveis de estudo:
-
-1. manter massas desprezíveis para verificar a derivação;
-2. ativar massas e inércias reais para estudar o equipamento construído.
-
-Para uma nova equação analítica com haste massiva, a formulação deve incluir a
-energia cinética rotacional e o centro de massa distribuído da haste.
+Com massas reais, a resposta deixará de coincidir exatamente com a EDO de massa
+pontual. Essa diferença será um resultado físico do modelo ampliado, não um erro
+de implementação.

@@ -10,7 +10,7 @@ end
 figures = gobjects(3,1);
 
 figures(1) = figure('Name','Angular response','Color','w');
-tiledlayout(2,1,'TileSpacing','compact');
+tiledlayout(3,1,'TileSpacing','compact');
 nexttile;
 plot(sim.t, rad2deg(sim.x(:,1)), 'LineWidth', 1.3);
 hold on;
@@ -21,7 +21,13 @@ end
 ylabel('\psi [deg]'); grid on;
 nexttile;
 plot(sim.t, sim.x(:,2), 'LineWidth', 1.3);
-xlabel('Time [s]'); ylabel('d\psi/dt [rad/s]'); grid on;
+ylabel('d\psi/dt [rad/s]'); grid on;
+nexttile;
+plot(sim.t, sim.alphaDDot, 'LineWidth', 1.2);
+hold on;
+plot(sim.t, sim.betaDDot, '--', 'LineWidth', 1.2);
+xlabel('Time [s]'); ylabel('Angular acceleration [rad/s^2]');
+legend('d^2\alpha/dt^2','d^2\beta/dt^2','Location','best'); grid on;
 
 figures(2) = figure('Name','Physical outputs','Color','w');
 tiledlayout(2,1,'TileSpacing','compact');

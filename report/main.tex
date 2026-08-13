@@ -53,10 +53,9 @@
 \newcommand{\bvec}[1]{\bm{#1}}
 \newcommand{\R}[2]{{}^{#1}\!\bvec R_{#2}}
 \newcommand{\vct}[2]{{}^{#1}\!\bvec{#2}}
-\newcommand{\Om}{\Omega}
 
 \title{\textbf{Dinâmica de um Pêndulo Montado em Disco Rotativo}\\
-\large Derivação, auditoria, integração numérica e correspondência física}
+\large Modelagem, integração numérica e validação computacional}
 \author{Everton Machado do Amparo}
 \date{\today}
 
@@ -64,39 +63,60 @@
 \maketitle
 
 \begin{abstract}
-Este relatório formaliza a solução de um sistema com três rotações consecutivas:
-um braço gira com velocidade angular constante, um disco gira em relação ao
-braço e uma haste pendular possui movimento livre. São apresentadas as
-transformações de coordenadas, velocidades e acelerações angulares, aceleração
-da massa, diagrama de corpo livre e equação diferencial não linear. A derivação
-é ligada a uma implementação MATLAB modular, com o método de Runge--Kutta de
-quarta ordem, comparação com \texttt{ode45}, grandezas de pós-processamento e
-testes. O objetivo é produzir uma base rastreável para um modelo posterior em
-Simulink, Simscape Multibody e CAD 3D.
+Este trabalho estuda um pêndulo montado na extremidade de um braço e sobre um
+disco rotativo. O exercício usado como referência considera velocidades
+angulares constantes; aqui, essa hipótese é mantida como caso de verificação e
+depois substituída por movimentos prescritos $\alpha(t)$ e $\beta(t)$ com
+velocidades e acelerações variáveis. A formulação resultante é implementada em
+MATLAB, Simulink e Simscape Multibody. O código inclui um integrador de
+Runge--Kutta de quarta ordem, comparação com \texttt{ode45}, testes de
+consistência cinemática e confronto entre o modelo por equações e o modelo
+multicorpos. A geometria foi escrita de modo a permitir a futura substituição
+dos sólidos paramétricos por componentes CAD.
 \end{abstract}
 
 \tableofcontents
 
-\section{Resultado da auditoria}
+\section{Escopo da modelagem}
 
-A equação diferencial a seguir foi obtida por derivação independente e coincide
-com o resultado final da resolução manuscrita, desde que sejam adotadas as
-convenções geométricas explicitadas neste relatório -- em particular, $r$ como
-distância radial e $h$ como deslocamento vertical:
+O enunciado usado como ponto de partida impõe velocidades angulares constantes
+ao braço e ao disco. Sob essa hipótese,
+$\ddot\alpha=\ddot\beta=0$. O modelo desenvolvido neste trabalho é mais geral:
+$\alpha(t)$ e $\beta(t)$ são funções prescritas, com derivadas conhecidas até a
+segunda ordem. Define-se
+\begin{equation}
+\Omega(t)=\dot\alpha(t)+\dot\beta(t), \qquad
+\dot\Omega(t)=\ddot\alpha(t)+\ddot\beta(t), \qquad
+\rho=r+l\sin\psi.
+\label{eq:definitions}
+\end{equation}
+
+A equação de movimento obtida para a coordenada livre $\psi$ é
 \begin{equation}
 \boxed{
 l\ddot\psi+g\sin\psi
-+b\dot\alpha^{\,2}\sin\beta\cos\psi
--(\dot\alpha+\dot\beta)^2\bigl(r+l\sin\psi\bigr)\cos\psi=0.}
++b\left(\dot\alpha^{\,2}\sin\beta+\ddot\alpha\cos\beta\right)\cos\psi
+-\Omega^2\left(r+l\sin\psi\right)\cos\psi=0.}
 \label{eq:eom}
 \end{equation}
-Aqui, somente $\dot\alpha$ e $\dot\beta$ são constantes. Portanto,
-$\alpha(t)=\alpha_0+\dot\alpha t$ e
-$\beta(t)=\beta_0+\dot\beta t$; em particular, o termo $\sin\beta(t)$ torna
-\cref{eq:eom} explicitamente dependente do tempo quando $\dot\beta\neq0$.
+O termo com $\ddot\alpha$ representa a aceleração tangencial do ponto $B$. A
+aceleração $\ddot\beta$ não aparece diretamente em \cref{eq:eom}: para a
+geometria adotada, a aceleração de Euler associada a $\dot\Omega$ atua em
+$X_2$, perpendicular ao plano de oscilação. Ela permanece, porém, na aceleração
+absoluta de $E$ e nas reações da junta.
 
-Quatro pontos de notação devem ficar explícitos para evitar erros na passagem ao
-modelo físico:
+Quando $\dot\alpha$ e $\dot\beta$ são constantes, a expressão anterior se reduz
+ao resultado do exercício de referência:
+\begin{equation}
+ l\ddot\psi+g\sin\psi
+ +b\dot\alpha^{\,2}\sin\beta\cos\psi
+ -(\dot\alpha+\dot\beta)^2\left(r+l\sin\psi\right)\cos\psi=0.
+\label{eq:eom-constant-rate}
+\end{equation}
+Essa coincidência verifica o caso particular, sem estender a conclusão a todas
+as etapas da resolução manuscrita.
+
+As seguintes convenções geométricas são usadas em todo o projeto:
 \begin{enumerate}
   \item $r$ é a distância radial, no plano do disco, entre o eixo em $C$ e o
   pivô em $D$;
@@ -104,11 +124,9 @@ modelo físico:
   de $B$ a $D$ é $c+h$, e a de $O$ a $D$ é $a+c+h$;
   \item $a$, $c$ e $h$ são deslocamentos verticais constantes: afetam a posição
   absoluta, mas não a equação dinâmica ideal;
-  \item o giro absoluto do disco é
-  $\Om=\dot\alpha+\dot\beta$, pois os dois primeiros giros ocorrem em torno de
-  eixos verticais paralelos.
+  \item $\Omega$ é a velocidade angular absoluta do disco, pois os giros de
+  $\alpha$ e $\beta$ ocorrem em torno de eixos verticais paralelos.
 \end{enumerate}
-
 \section{Descrição física e hipóteses}
 
 O referencial inercial $I$ tem origem em $O$. As bases móveis $B1$, $B2$ e $B3$
@@ -170,8 +188,9 @@ As hipóteses do modelo-base são:
   \item haste rígida e sem massa; partícula $E$ pontual;
   \item vínculos ideais e ausência de folgas;
   \item gravidade uniforme, $\bvec g=-g\bvec k$;
-  \item $\dot\alpha$ e $\dot\beta$ impostas por atuadores ideais e constantes;
-  \item ausência de amortecimento e torque externo na derivação original.
+  \item $\alpha(t)$ e $\beta(t)$ impostas por atuadores ideais, com derivadas
+  conhecidas até a segunda ordem;
+  \item ausência de amortecimento e torque externo na formulação ideal.
 \end{itemize}
 
 Os vetores geométricos são
@@ -206,67 +225,73 @@ pois matrizes de rotação são ortogonais.
 
 \section{Velocidades e acelerações angulares}
 
-Definindo $\Om=\dot\alpha+\dot\beta$, obtêm-se
+Com as definições de \cref{eq:definitions}, as velocidades angulares são
 \begin{align}
 \vct{B1}{\omega}_1&=\begin{bmatrix}0&0&\dot\alpha\end{bmatrix}^{T},\\
-\vct{B2}{\omega}_2&=\begin{bmatrix}0&0&\Om\end{bmatrix}^{T},\\
+\vct{B2}{\omega}_2&=\begin{bmatrix}0&0&\Omega\end{bmatrix}^{T},\\
 \vct{B3}{\omega}_3&=
-\begin{bmatrix}\dot\psi&\Om\sin\psi&\Om\cos\psi\end{bmatrix}^{T}.
+\begin{bmatrix}\dot\psi&\Omega\sin\psi&\Omega\cos\psi\end{bmatrix}^{T}.
 \end{align}
-Como as duas primeiras taxas são constantes,
+Não se impõe constância às taxas. As acelerações angulares absolutas ficam
 \begin{align}
-\vct{B1}{\dot\omega}_1&=\bvec0, &
-\vct{B2}{\dot\omega}_2&=\bvec0,\\
+\vct{B1}{\dot\omega}_1&=\begin{bmatrix}0&0&\ddot\alpha\end{bmatrix}^{T},\\
+\vct{B2}{\dot\omega}_2&=\begin{bmatrix}0&0&\dot\Omega\end{bmatrix}^{T},\\
 \vct{B3}{\dot\omega}_3&=
 \begin{bmatrix}
-\ddot\psi&\Om\dot\psi\cos\psi&-\Om\dot\psi\sin\psi
+\ddot\psi &
+\dot\Omega\sin\psi+\Omega\dot\psi\cos\psi &
+\dot\Omega\cos\psi-\Omega\dot\psi\sin\psi
 \end{bmatrix}^{T}.
 \end{align}
-
+Os termos com $\dot\Omega$ desaparecem apenas no caso particular de velocidades
+prescritas constantes.
 \section{Aceleração linear da partícula}
 
-A aceleração do ponto $B$, inicialmente expressa em $B1$, é puramente
-centrípeta:
+A aceleração do ponto $B$, expressa em $B1$, contém parcelas normal e
+tangencial:
 \begin{equation}
-\vct{B1}{a}_B=\begin{bmatrix}-b\dot\alpha^2&0&0\end{bmatrix}^{T}.
+\vct{B1}{a}_B=
+\begin{bmatrix}-b\dot\alpha^2&b\ddot\alpha&0\end{bmatrix}^{T}.
 \end{equation}
-Os deslocamentos verticais $BC=c\bvec k$ e $h\bvec k_2$ são paralelos ao eixo de rotação. Logo,
-$\bvec a_C=\bvec a_B$. Em $B2$,
+Os deslocamentos $BC=c\bvec k$ e $h\bvec k_2$ são paralelos aos eixos de
+rotação. Portanto, $\bvec a_C=\bvec a_B$. Em $B2$,
 \begin{equation}
 \vct{B2}{a}_C=
 \begin{bmatrix}
--b\dot\alpha^2\cos\beta\\
-b\dot\alpha^2\sin\beta\\0
+-b\dot\alpha^2\cos\beta+b\ddot\alpha\sin\beta\\
+b\dot\alpha^2\sin\beta+b\ddot\alpha\cos\beta\\0
 \end{bmatrix}.
 \end{equation}
 
-Aplicando a fórmula de aceleração de um ponto de um corpo rígido e incluindo o
-movimento relativo associado a $\psi$, chega-se a
+Usando $\rho=r+l\sin\psi$ e somando as parcelas relativa, de Coriolis,
+centrípeta e de Euler, obtém-se
 \begin{equation}
 \vct{B2}{a}_E=
 \begin{bmatrix}
--b\dot\alpha^2\cos\beta-2l\Om\dot\psi\cos\psi\\
-b\dot\alpha^2\sin\beta-\Om^2(r+l\sin\psi)
+-b\dot\alpha^2\cos\beta+b\ddot\alpha\sin\beta
+-\dot\Omega\rho-2l\Omega\dot\psi\cos\psi\\
+b\dot\alpha^2\sin\beta+b\ddot\alpha\cos\beta-\Omega^2\rho
 +l\ddot\psi\cos\psi-l\dot\psi^2\sin\psi\\
 l\ddot\psi\sin\psi+l\dot\psi^2\cos\psi
 \end{bmatrix}.
 \label{eq:acceleration-b2}
 \end{equation}
-O primeiro termo adicional na componente $X_2$ é de Coriolis. O termo
-$\Om^2(r+l\sin\psi)$ é centrípeto e revela diretamente por que $r$ precisa ser
-uma dimensão radial.
+A primeira componente mostra onde $\ddot\beta$ atua: ela está contida em
+$\dot\Omega\rho$. Esse termo é relevante para a reação transversal do pivô,
+embora não se projete na direção generalizada de $\psi$.
 
-Transformando \cref{eq:acceleration-b2} para $B3$, as componentes relevantes ao
-diagrama de corpo livre tornam-se
+Definindo
+\begin{equation}
+A_C=b\left(\dot\alpha^2\sin\beta+\ddot\alpha\cos\beta\right),
+\label{eq:arm-acceleration}
+\end{equation}
+as componentes usadas no diagrama de corpo livre são
 \begin{align}
-\vct{B3}{a}_{E,y}&=
-b\dot\alpha^2\sin\beta\cos\psi+l\ddot\psi
--\Om^2(r+l\sin\psi)\cos\psi,\label{eq:ay3}\\
-\vct{B3}{a}_{E,z}&=
--b\dot\alpha^2\sin\beta\sin\psi+l\dot\psi^2
-+\Om^2(r+l\sin\psi)\sin\psi.\label{eq:az3}
+\vct{B3}{a}_{E,y}&=A_C\cos\psi+l\ddot\psi
+-\Omega^2\rho\cos\psi,\label{eq:ay3}\\
+\vct{B3}{a}_{E,z}&=-A_C\sin\psi+l\dot\psi^2
++\Omega^2\rho\sin\psi.\label{eq:az3}
 \end{align}
-
 \section{Diagrama de corpo livre e equação de movimento}
 
 Sobre a partícula atuam a tração $T\bvec k_3$ e o peso. Em $B3$,
@@ -274,44 +299,65 @@ Sobre a partícula atuam a tração $T\bvec k_3$ e o peso. Em $B3$,
 \vct{B3}{F}=
 \begin{bmatrix}0\\-mg\sin\psi\\T-mg\cos\psi\end{bmatrix}.
 \end{equation}
-Na direção $Y_3$, a segunda lei de Newton combinada com \cref{eq:ay3} fornece
-diretamente \cref{eq:eom}. Na direção $Z_3$, obtém-se a força de tração:
+Na direção $Y_3$, a segunda lei de Newton combinada com \cref{eq:ay3} produz
+\cref{eq:eom}. Na direção $Z_3$, resulta
 \begin{equation}
-\boxed{T=m\left[g\cos\psi-b\dot\alpha^2\sin\beta\sin\psi
-+\Om^2(r+l\sin\psi)\sin\psi+l\dot\psi^2\right].}
+\boxed{T=m\left[g\cos\psi-A_C\sin\psi
++\Omega^2\rho\sin\psi+l\dot\psi^2\right].}
 \label{eq:tension}
 \end{equation}
-Se \cref{eq:tension} resultar em $T<0$, um fio real ficaria frouxo. Nesse caso,
-o vínculo de pêndulo sempre tracionado deixa de ser válido e deve ser substituído
-por um modelo híbrido com perda e retomada de contato.
-
+Se \cref{eq:tension} fornecer $T<0$, um fio real ficaria frouxo. O modelo atual
+usa uma haste rígida ou, de forma equivalente, pressupõe um vínculo sempre
+tracionado; perda e retomada de contato exigem outra formulação.
 \section{Forma de estado e extensão não ideal}
 
-Com $x_1=\psi$ e $x_2=\dot\psi$, a equação ideal é escrita como
+Com $x_1=\psi$ e $x_2=\dot\psi$, define-se
+\begin{equation}
+A_C(t)=b\left[\dot\alpha(t)^2\sin\beta(t)
++\ddot\alpha(t)\cos\beta(t)\right].
+\end{equation}
+A forma de estado ideal é
 \begin{align}
 \dot x_1&=x_2,\\
 \dot x_2&=\frac{1}{l}\left[
-\Om^2(r+l\sin x_1)\cos x_1-g\sin x_1
--b\dot\alpha^2\sin\beta(t)\cos x_1\right].
+\Omega(t)^2(r+l\sin x_1)\cos x_1-g\sin x_1-A_C(t)\cos x_1
+\right].
 \label{eq:state}
 \end{align}
-O código acrescenta parâmetros opcionais: amortecimento viscoso $d$ no pivô e
-torque aplicado $\tau(t,\bvec x)$. Nesse caso,
+O código admite amortecimento viscoso $d$ no pivô e torque aplicado
+$\tau(t,\bvec x)$. Nesse caso,
 \begin{equation}
-l\ddot\psi+g\sin\psi+b\dot\alpha^2\sin\beta\cos\psi
--\Om^2(r+l\sin\psi)\cos\psi
+l\ddot\psi+g\sin\psi+A_C\cos\psi
+-\Omega^2\rho\cos\psi
 +\frac{d}{ml}\dot\psi-\frac{\tau}{ml}=0.
 \end{equation}
 
-A linearização em torno de $\psi\approx0$ produz, no caso ideal,
+A linearização em torno de $\psi\approx0$ fornece
 \begin{equation}
-l\ddot\psi+(g-l\Om^2)\psi
-=\Om^2r-b\dot\alpha^2\sin\beta(t).
+l\ddot\psi+(g-l\Omega^2)\psi=\Omega^2r-A_C.
 \end{equation}
-Essa aproximação evidencia a excitação periódica causada pelo braço e a redução
-da rigidez efetiva quando $\Om^2$ se aproxima de $g/l$. Ela é útil para análise,
-mas não substitui o modelo não linear em grandes ângulos.
+Como $\Omega$ e $A_C$ podem variar, tanto a rigidez efetiva quanto a excitação
+são funções do tempo. A aproximação é útil perto da vertical, mas não substitui
+o modelo não linear em amplitudes maiores.
 
+\subsection{Lei de movimento usada no caso demonstrativo}
+
+Para manter posição, velocidade e aceleração mutuamente consistentes, cada
+ângulo prescrito usa o perfil
+\begin{equation}
+q(t)=q_0+\bar\omega t+A\left[\sin(\nu t+\phi)-\sin\phi\right],
+\end{equation}
+com
+\begin{equation}
+\dot q=\bar\omega+A\nu\cos(\nu t+\phi), \qquad
+\ddot q=-A\nu^2\sin(\nu t+\phi).
+\end{equation}
+Esse perfil serve apenas como entrada reproduzível. Em MATLAB, ele pode ser
+substituído por uma função que devolva
+$[\alpha,\dot\alpha,\ddot\alpha,\beta,\dot\beta,\ddot\beta]^T$.
+No Simulink e no Multibody, os seis sinais aparecem de forma explícita para que
+possam ser trocados por trajetórias medidas, tabeladas ou geradas por um
+controlador.
 \section{Integração numérica}
 
 Para um sistema genérico $\dot{\bvec x}=\bvec f(t,\bvec x)$, o RK4 clássico usa
@@ -356,7 +402,8 @@ Antes de comparar com CAD ou bancada, recomenda-se a seguinte sequência:
 \begin{enumerate}
   \item \textbf{Unidades:} todos os termos de \cref{eq:eom} têm unidade de
   aceleração, \si{m.s^{-2}}.
-  \item \textbf{Caso-limite:} com $\dot\alpha=\dot\beta=0$, recupera-se
+  \item \textbf{Caso-limite:} com $\dot\alpha=\dot\beta=0$ e
+  $\ddot\alpha=\ddot\beta=0$, recupera-se
   $\ddot\psi=-(g/l)\sin\psi$.
   \item \textbf{Resíduo:} substituir a aceleração calculada na equação e exigir
   resíduo próximo da precisão de máquina.
@@ -374,41 +421,44 @@ não precisa ser conservada; usá-la como teste de conservação produziria uma
 conclusão incorreta. Ela continua útil para quantificar a energia transferida
 pelos atuadores.
 
-\section{Correspondência com Simulink e CAD}
+\section{Correspondência com Simulink, Multibody e CAD}
+
 \subsection{Modelo Simulink por equações}
 
-Foi construído o modelo \texttt{rotating\_pendulum.slx}, mostrado na
-\cref{fig:simulink}. O diagrama mantém visíveis os três termos da equação
-dinâmica, realiza as duas integrações necessárias e calcula a tração como saída
-de diagnóstico.
+O arquivo \texttt{rotating\_pendulum.slx} implementa \cref{eq:state} em blocos.
+A parte esquerda do diagrama gera $\alpha$, $\dot\alpha$, $\ddot\alpha$,
+$\beta$, $\dot\beta$ e $\ddot\beta$ a partir de uma única base de tempo. Em
+seguida são calculados $\Omega^2$, $A_C$, $\rho$ e os termos da equação. Dois
+integradores em cascata produzem $\dot\psi$ e $\psi$.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{../docs/figures/simulink-diagram.png}
-\caption{Implementação da equação diferencial não linear em blocos Simulink.}
+\caption{Implementação da equação diferencial com movimentos prescritos
+acelerados.}
 \label{fig:simulink}
 \end{figure}
 
-O modelo usa \texttt{ode45} com passo variável, tolerâncias relativa e absoluta
-de $10^{-8}$ e $10^{-10}$ e passo máximo de \SI{0.01}{s}. A validação automática
-contra uma integração MATLAB independente produziu erros máximos de
-$5{,}73\times10^{-10}\,\si{rad}$ em $\psi$ e
-$2{,}48\times10^{-9}\,\si{rad.s^{-1}}$ em $\dot\psi$. A tração mínima foi
-\SI{2.456}{N} no caso demonstrativo.
-Com \texttt{ode4} e passo fixo de \SI{0.002}{s}, a comparação direta com o
-RK4 MATLAB apresentou erros de $2{,}39\times10^{-15}\,\si{rad}$ em $\psi$ e
-$1{,}02\times10^{-14}\,\si{rad.s^{-1}}$ em $\dot\psi$.
+Com \texttt{ode45}, tolerâncias relativa e absoluta de $10^{-8}$ e $10^{-10}$
+e passo máximo de \SI{0.01}{s}, a comparação com uma integração MATLAB
+independente apresentou erros máximos de
+$2{,}81\times10^{-10}\,\si{rad}$ em $\psi$ e
+$1{,}30\times10^{-9}\,\si{rad.s^{-1}}$ em $\dot\psi$. A tração mínima foi
+\SI{2.458}{N}. Com \texttt{ode4} e passo de \SI{0.002}{s}, os erros em relação
+ao RK4 MATLAB foram $8{,}05\times10^{-16}\,\si{rad}$ e
+$4{,}00\times10^{-15}\,\si{rad.s^{-1}}$, respectivamente.
 
-Além do arquivo binário \texttt{.slx}, o projeto inclui um gerador programático
-que recria todos os blocos e conexões. Isso torna a arquitetura auditável no
-controle de versão e permite regenerar o modelo após alterações.
+O arquivo binário \texttt{.slx} é acompanhado por um gerador programático. Essa
+duplicidade é deliberada: o modelo pode ser aberto diretamente para estudo e
+também reconstruído a partir de uma fonte textual versionável.
+
 \subsection{Modelo físico em Simscape Multibody}
 
-O modelo \texttt{rotating\_pendulum\_multibody.slx} representa a cadeia física
-por meio de transformações rígidas, três juntas de revolução, gravidade,
-atuadores de movimento e sensores. A massa $m$ é concentrada em $E$; os sólidos
-coloridos que representam coluna, braço, disco, suporte e haste têm massa
-numérica desprezível, preservando as hipóteses da derivação.
+O arquivo \texttt{rotating\_pendulum\_multibody.slx} representa a cadeia por
+transformações rígidas, três juntas de revolução, gravidade, atuadores e
+sensores. A massa $m$ é concentrada em $E$; os sólidos coloridos possuem massa
+numérica desprezível para manter a correspondência com a hipótese de massa
+pontual.
 
 \begin{figure}[ht]
 \centering
@@ -417,76 +467,74 @@ numérica desprezível, preservando as hipóteses da derivação.
 \label{fig:multibody}
 \end{figure}
 
-Os movimentos de $\alpha$ e $\beta$ são impostos com posição, velocidade
-constante e aceleração nula fornecidas explicitamente. A junta de $\psi$ é
-livre e tem condição inicial igual à do modelo analítico. Uma transformação
-permuta os eixos para fazer o eixo padrão $Z$ da junta coincidir com $X_2$.
+Para cada junta acionada, o conversor físico recebe posição, velocidade e
+aceleração calculadas pela mesma lei de movimento do modelo MATLAB. A junta de
+$\psi$ permanece livre. Uma transformação rígida alinha o eixo padrão $Z$ da
+junta com $X_2$, que é o eixo físico de oscilação.
 
-A comparação de \SI{20}{s} com o modelo analítico apresentou erros máximos de
-$1{,}75\times10^{-8}\,\si{rad}$ em $\psi$,
-$7{,}62\times10^{-8}\,\si{rad.s^{-1}}$ em $\dot\psi$,
-$6{,}12\times10^{-9}\,\si{m}$ na posição de $E$ e
-$1{,}82\times10^{-8}\,\si{N}$ na tração. A força axial mínima foi
-\SI{2.456}{N}. A tração foi obtida projetando a força vetorial da junta na
-direção instantânea da haste.
+A validação compara $\psi$, $\dot\psi$, $\ddot\psi$, a posição absoluta de $E$
+e a força axial da haste. A força é obtida pela projeção da reação vetorial da
+junta na direção instantânea de $DE$. Em \SI{20}{s}, os erros máximos foram
+$7{,}76\times10^{-9}\,\si{rad}$ em $\psi$,
+$3{,}71\times10^{-8}\,\si{rad.s^{-1}}$ em $\dot\psi$,
+$2{,}72\times10^{-9}\,\si{m}$ na posição e
+$1{,}15\times10^{-8}\,\si{N}$ na tração. A força axial mínima foi
+\SI{2.458}{N}.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.88\textwidth]{../docs/figures/multibody-validation.png}
-\caption{Comparação entre o modelo analítico e o Simscape Multibody.}
+\caption{Comparação entre a equação de movimento e o modelo Multibody.}
 \label{fig:multibody-validation}
 \end{figure}
 
-Na futura integração CAD, os sólidos paramétricos poderão ser substituídos por
+\subsection{Passagem para o modelo CAD}
+
+Na integração futura, os sólidos paramétricos poderão ser substituídos por
 blocos \texttt{File Solid} ou por uma montagem importada com \texttt{smimport}.
-Os referenciais em $O$, $A$, $B$, $C$, $D$ e $E$, as direções das juntas e os
-sensores devem ser preservados. Ao ativar as massas e inércias reais das peças,
-a resposta deixará de coincidir com a equação de massa pontual, passando a
-representar o equipamento físico mais completo.
+Os referenciais em $O$, $A$, $B$, $C$, $D$ e $E$ e as direções das juntas devem
+ser mantidos. O mapeamento mínimo é apresentado na \cref{tab:cad-map}.
 
 \begin{table}[ht]
 \centering
-\caption{Mapeamento mínimo entre equações e montagem física.}
+\caption{Mapeamento entre a formulação e a montagem física.}
+\label{tab:cad-map}
 \begin{tabularx}{\textwidth}{@{}l l X@{}}
 \toprule
 Elemento & Modelo & Implementação física/virtual\\
 \midrule
 $OA$ & deslocamento $a\bvec k$ & coluna fixa\\
-$AB$ & comprimento $b$, giro $\alpha$ em $Z$ & braço e junta rotativa\\
+$AB$ & comprimento $b$, giro $\alpha$ em $Z$ & braço e junta acionada\\
 $BC$ & deslocamento $c\bvec k$ & suporte vertical\\
-$CD$ & $r\bvec j_2+h\bvec k_2$ & raio e altura do pivô no disco\\
+$CD$ & $r\bvec j_2+h\bvec k_2$ & posição do pivô no disco\\
 $DE$ & comprimento $l$, giro $\psi$ em $X_2$ & haste e junta pendular\\
 $E$ & massa pontual $m$ & massa concentrada/centro de massa\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-No Simulink algébrico, um bloco MATLAB Function calcula \cref{eq:state}; dois
-integradores em cascata geram $\dot\psi$ e $\psi$. Fontes do tipo rampa geram
-$\alpha$ e $\beta$. A tensão de \cref{eq:tension} e a posição absoluta são
-saídas de diagnóstico.
-
-No Simscape Multibody, as juntas devem respeitar exatamente os eixos da
-\cref{eq:rotations}. Recomenda-se exportar do CAD as massas, posições de centro
-de massa e tensores de inércia. Para reproduzir o modelo deste relatório, a
-haste deve ter massa desprezível e a massa deve ser concentrada em $E$; ao usar
-uma haste real, sua inércia deve entrar numa nova derivação por Lagrange ou por
-equações multicorpos.
-
+Ao ativar massas e inércias reais, a resposta não deve mais coincidir
+exatamente com a EDO de massa pontual. Nessa etapa, a formulação atual servirá
+como caso de referência para avaliar o efeito da haste, do disco, das folgas e
+dos atuadores reais.
 \section{Conclusão}
 
-A derivação independente apresentada neste relatório fornece uma equação
-diferencial consistente com a cinemática e com o equilíbrio dinâmico do
-modelo ideal. Sua não linearidade vem dos produtos trigonométricos e
-da dependência do raio $r+l\sin\psi$ com a configuração. Além disso, o termo
-$\sin\beta(t)$ gera excitação periódica. A estrutura MATLAB entregue mantém o
-modelo físico separado do método numérico, compara RK4 com \texttt{ode45} e
-expõe posição, aceleração, energia e tensão. O modelo físico Multibody
-reproduz essas grandezas e deixa preparada a substituição dos sólidos
-paramétricos por componentes CAD.
+O caso de velocidades constantes do exercício de referência foi preservado como
+verificação, mas deixou de limitar o modelo. A formulação geral aceita
+$\alpha(t)$ e $\beta(t)$ aceleradas e mostra com clareza a função de cada termo:
+$\ddot\alpha$ altera diretamente a dinâmica de $\psi$, enquanto
+$\ddot\beta$ contribui para a aceleração transversal e para as reações da junta.
+A mesma lei de movimento alimenta MATLAB, Simulink e Simscape Multibody, evitando
+a inconsistência comum de prescrever posição sem fornecer derivadas compatíveis.
 
+Os testes cobrem a equação de movimento, a cinemática absoluta, o caso de
+pêndulo simples e a comparação entre integradores. O modelo multicorpos mantém a
+geometria $CD=r\bvec j_2+h\bvec k_2$ e pode receber peças CAD no lugar dos
+sólidos paramétricos. Quando forem usadas massas e inércias reais, a equação de
+massa pontual passará a ser uma referência simplificada, e não uma reprodução
+completa do conjunto físico.
 \appendix
-\section{Parâmetros demonstrativos do código}
+\section{Parâmetros do caso demonstrativo}
 
 \begin{table}[ht]
 \centering
@@ -494,20 +542,24 @@ paramétricos por componentes CAD.
 \toprule
 Parâmetro & Valor inicial & Observação\\
 \midrule
-$a$ & \SI{0.30}{m} & apenas posição absoluta\\
+$a$ & \SI{0.30}{m} & posição absoluta\\
 $b$ & \SI{0.50}{m} & comprimento do braço\\
-$c$ & \SI{0.10}{m} & apenas posição absoluta\\
-$r$ & \SI{0.20}{m} & raio no disco\\
+$c$ & \SI{0.10}{m} & posição absoluta\\
+$r$ & \SI{0.20}{m} & distância radial no disco\\
 $h$ & \SI{0.15}{m} & altura de $C$ a $D$\\
 $l$ & \SI{0.35}{m} & comprimento do pêndulo\\
-$m$ & \SI{0.25}{kg} & massa concentrada\\
-$\dot\alpha$ & \SI{1.20}{rad.s^{-1}} & taxa prescrita\\
-$\dot\beta$ & \SI{2.00}{rad.s^{-1}} & taxa relativa prescrita\\
+$m$ & \SI{0.25}{kg} & massa concentrada em $E$\\
+$\bar\omega_\alpha$ & \SI{1.00}{rad.s^{-1}} & taxa média prescrita\\
+$A_\alpha$ & \SI{0.20}{rad} & modulação de $\alpha$\\
+$\nu_\alpha$ & \SI{0.80}{rad.s^{-1}} & frequência de modulação\\
+$\bar\omega_\beta$ & \SI{1.60}{rad.s^{-1}} & taxa média relativa\\
+$A_\beta$ & \SI{0.16}{rad} & modulação de $\beta$\\
+$\nu_\beta$ & \SI{0.55}{rad.s^{-1}} & frequência de modulação\\
 \bottomrule
 \end{tabular}
 \end{table}
-Esses números servem somente para tornar o exemplo executável e não foram
-extraídos do enunciado. A identificação física deve substituí-los antes de
-qualquer comparação quantitativa.
+Os valores servem apenas para tornar a simulação reproduzível. Dimensões,
+massas, inércias e trajetórias de operação deverão ser substituídas pelos dados
+do projeto CAD e dos atuadores antes de qualquer comparação experimental.
 
 \end{document}

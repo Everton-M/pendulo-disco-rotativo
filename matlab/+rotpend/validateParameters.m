@@ -1,13 +1,13 @@
 function validateParameters(p)
 %VALIDATEPARAMETERS Check model inputs before numerical integration.
 
-required = {'a','b','c','r','h','l','m','g','alpha0','beta0', ...
-    'alphaRate','betaRate','psi0','psiRate0','damping','appliedTorque'};
+required = {'a','b','c','r','h','l','m','g','alphaProfile','betaProfile', ...
+    'motionFunction','psi0','psiRate0','damping','appliedTorque'};
 missing = required(~isfield(p, required));
 assert(isempty(missing), 'rotpend:MissingParameter', ...
     'Missing parameter(s): %s', strjoin(missing, ', '));
 
-finiteScalars = required(1:end-1);
+finiteScalars = {'a','b','c','r','h','l','m','g','psi0','psiRate0','damping'};
 for k = 1:numel(finiteScalars)
     value = p.(finiteScalars{k});
     assert(isnumeric(value) && isscalar(value) && isfinite(value), ...
@@ -23,4 +23,24 @@ assert(p.damping >= 0, 'rotpend:InvalidDamping', ...
     'Damping must be nonnegative.');
 assert(isa(p.appliedTorque, 'function_handle'), 'rotpend:InvalidTorque', ...
     'appliedTorque must be a function handle @(t,x).');
+assert(isempty(p.motionFunction) || isa(p.motionFunction, 'function_handle'), ...
+    'rotpend:InvalidMotionFunction', ...
+    'motionFunction must be empty or a function handle @(t).');
+validateProfile(p.alphaProfile, 'alphaProfile');
+validateProfile(p.betaProfile, 'betaProfile');
+rotpend.motionAt(0, p);
+end
+
+function validateProfile(profile, name)
+fields = {'initialAngle','meanRate','amplitude','frequency','phase'};
+assert(isstruct(profile) && all(isfield(profile, fields)), ...
+    'rotpend:InvalidMotionProfile', '%s is incomplete.', name);
+for k = 1:numel(fields)
+    value = profile.(fields{k});
+    assert(isnumeric(value) && isscalar(value) && isfinite(value), ...
+        'rotpend:InvalidMotionProfile', ...
+        '%s.%s must be a finite scalar.', name, fields{k});
+end
+assert(profile.frequency >= 0, 'rotpend:InvalidMotionProfile', ...
+    '%s.frequency must be nonnegative.', name);
 end

@@ -58,8 +58,15 @@ report.maximumPsiDotError = max(abs(psiDot - referenceState(:,2)));
 report.maximumPsiDDotError = max(abs(psiDDot - referencePsiDDot));
 report.maximumPositionError = max(vecnorm(positionE-referencePositionE,2,2));
 report.maximumTensionError = max(abs(axialForce-referenceTension));
-report.maximumAlphaError = max(abs(alpha-(p.alpha0+p.alphaRate*t)));
-report.maximumBetaError = max(abs(beta-(p.beta0+p.betaRate*t)));
+expectedAlpha = zeros(size(t));
+expectedBeta = zeros(size(t));
+for k = 1:numel(t)
+    motion = rotpend.motionAt(t(k), p);
+    expectedAlpha(k) = motion.alpha;
+    expectedBeta(k) = motion.beta;
+end
+report.maximumAlphaError = max(abs(alpha-expectedAlpha));
+report.maximumBetaError = max(abs(beta-expectedBeta));
 report.minimumAxialForce = min(axialForce);
 report.numberOfSamples = numel(t);
 
@@ -90,26 +97,11 @@ save(fullfile(resultsDirectory, 'multibody_validation.mat'), ...
     'report', 't', 'psi', 'psiDot', 'positionE', 'jointForce', ...
     'referenceState', 'referencePositionE', 'referenceTension');
 
-figureHandle = figure('Name','Multibody validation','Color','w');
-tiledlayout(2,1,'TileSpacing','compact');
-nexttile;
-plot(t, rad2deg(referenceState(:,1)), 'LineWidth', 1.4);
-hold on;
-plot(t, rad2deg(psi), '--', 'LineWidth', 1.1);
-ylabel('\psi [deg]'); grid on;
-legend('ODE model','Simscape Multibody','Location','best');
-nexttile;
-plot(t, 1e6*(psi-referenceState(:,1)), 'LineWidth', 1.2);
-xlabel('Time [s]'); ylabel('Angular error [\murad]'); grid on;
-exportgraphics(figureHandle, fullfile(resultsDirectory, ...
-    'multibody_validation.png'), 'Resolution', 180);
-documentationDirectory = fullfile(projectRoot, 'docs', 'figures');
-if ~isfolder(documentationDirectory)
-    mkdir(documentationDirectory);
+if usejava('jvm')
+    plot_multibody_validation(fullfile(resultsDirectory, 'multibody_validation.mat'));
+else
+    fprintf('Plot generation skipped because MATLAB is running without Java.\n');
 end
-exportgraphics(figureHandle, fullfile(documentationDirectory, ...
-    'multibody-validation.png'), 'Resolution', 180);
-close(figureHandle);
 
 close_system(modelName, 0);
 end

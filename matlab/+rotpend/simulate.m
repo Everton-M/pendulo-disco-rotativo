@@ -35,6 +35,12 @@ tension = zeros(n,1);
 energy = zeros(n,1);
 residual = zeros(n,1);
 psiDDot = zeros(n,1);
+alpha = zeros(n,1);
+alphaDot = zeros(n,1);
+alphaDDot = zeros(n,1);
+beta = zeros(n,1);
+betaDot = zeros(n,1);
+betaDDot = zeros(n,1);
 
 for k = 1:n
     sample = rotpend.stateAt(t(k), x(k,:).', p);
@@ -45,9 +51,17 @@ for k = 1:n
     energy(k) = sample.mechanicalEnergy;
     residual(k) = sample.dynamicResidual;
     psiDDot(k) = sample.psiDDot;
+    alpha(k) = sample.alpha;
+    alphaDot(k) = sample.alphaDot;
+    alphaDDot(k) = sample.alphaDDot;
+    beta(k) = sample.beta;
+    betaDot(k) = sample.betaDot;
+    betaDDot(k) = sample.betaDDot;
 end
 
 sim = struct('t', t, 'x', x, 'psiDDot', psiDDot, ...
+    'alpha', alpha, 'alphaDot', alphaDot, 'alphaDDot', alphaDDot, ...
+    'beta', beta, 'betaDot', betaDot, 'betaDDot', betaDDot, ...
     'positionE', positionE, 'velocityE', velocityE, ...
     'accelerationE', accelerationE, 'tension', tension, ...
     'mechanicalEnergy', energy, 'dynamicResidual', residual, ...
