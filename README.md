@@ -100,6 +100,25 @@ reportMultibody = validate_multibody_model()
 O procedimento e a preparação para CAD estão descritos em
 [docs/MULTIBODY.md](docs/MULTIBODY.md).
 
+### CAD do SolidWorks validado
+
+A montagem corrigida está em `estrutura cad/corrected-solidworks`. A exportação
+final do Simscape Multibody Link foi verificada no MATLAB e produz exatamente
+três juntas revolutas (`alpha`, `beta` e `psi`), sem substituições rígidas ou
+juntas cilíndricas.
+
+```matlab
+addpath('matlab/multibody')
+result = import_cad_model(Overwrite=true, ...
+    ModelName="rotating_pendulum_cad_final");
+open_system(result.modelFile)
+```
+
+O modelo gerado fica em
+`matlab/multibody/cad_import_final/rotating_pendulum_cad_final.slx`. Consulte
+`estrutura cad/CAD_REVIEW.md` para a topologia, os nomes dos posicionamentos e
+o procedimento de reexportação.
+
 ## Geometria
 
 | Trecho | Definição |

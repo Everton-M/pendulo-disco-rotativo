@@ -30,3 +30,14 @@ results/*.png
 .DS_Store
 Thumbs.db
 .vscode/
+# Private local notes
+docs/CHAT_CONTEXT.md
+
+# SolidWorks temporary files and local installation package
+~$*
+estrutura cad/smlink-r2024a-win64.zip
+
+# Intermediate CAD imports retained only for local diagnosis
+estrutura cad/simscape-export/
+matlab/multibody/cad_import_raw/
+matlab/multibody/cad_model_corrected/
