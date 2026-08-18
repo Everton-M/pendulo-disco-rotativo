@@ -100,6 +100,25 @@ reportMultibody = validate_multibody_model()
 O procedimento e a preparação para CAD estão descritos em
 [docs/MULTIBODY.md](docs/MULTIBODY.md).
 
+### CAD do SolidWorks validado
+
+A montagem corrigida está em `estrutura cad/corrected-solidworks`. A exportação
+final do Simscape Multibody Link foi verificada no MATLAB e produz exatamente
+três juntas revolutas (`alpha`, `beta` e `psi`), sem substituições rígidas ou
+juntas cilíndricas.
+
+```matlab
+addpath('matlab/multibody')
+result = import_cad_model(Overwrite=true, ...
+    ModelName="rotating_pendulum_cad_final");
+open_system(result.modelFile)
+```
+
+O modelo gerado fica em
+`matlab/multibody/cad_import_final/rotating_pendulum_cad_final.slx`. Consulte
+`estrutura cad/CAD_REVIEW.md` para a topologia, os nomes dos posicionamentos e
+o procedimento de reexportação.
+
 ## Geometria
 
 | Trecho | Definição |
@@ -126,19 +145,19 @@ pendulo-disco-rotativo/
 │   └── tests/                 # testes automatizados
 ├── docs/                      # guias e figuras
 ├── report/
-│   ├── main.tex               # relatório técnico
+│   ├── rotating-disk-pendulum-dynamics.tex # relatório técnico
 │   └── example-10-worked-solution.pdf
 └── results/                   # saídas locais ignoradas pelo Git
 ```
 
 ## Relatório
 
-O arquivo `report/main.tex` contém a derivação completa e pode ser compilado no
+O arquivo `report/rotating-disk-pendulum-dynamics.tex` contém a derivação completa e pode ser compilado no
 Overleaf ou localmente com TeX Live/MiKTeX:
 
 ```text
 cd report
-latexmk -pdf main.tex
+latexmk -pdf rotating-disk-pendulum-dynamics.tex
 ```
 
 Os valores de `defaultParameters.m` são demonstrativos. Dados extraídos do CAD
