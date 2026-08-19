@@ -2,7 +2,7 @@ ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION (( 'STEP AP203' ),
     '1' );
-FILE_NAME ('2_conexao_Valor predeterminado_sldprt.STEP',
+FILE_NAME ('2_rotating_arm_default_sldprt.STEP',
     '2026-08-18T17:37:40',
     ( '' ),
     ( '' ),
@@ -565,7 +565,7 @@ DATA;
 #550 = PRODUCT_DEFINITION ( 'UNKNOWN', '', #584, #499 ) ;
 #551 = CARTESIAN_POINT ( 'NONE',  ( 27.75000000000000355, 0.000000000000000000, 7.000000000000000888 ) ) ;
 #552 = EDGE_CURVE ( 'NONE', #587, #371, #60, .T. ) ;
-#553 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '2_conexao_Valor predeterminado_sldprt', ( #488, #267, #647 ), #412 ) ;
+#553 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '2_rotating_arm_default_sldprt', ( #488, #267, #647 ), #412 ) ;
 #554 = EDGE_LOOP ( 'NONE', ( #100, #513, #19, #208 ) ) ;
 #555 = CARTESIAN_POINT ( 'NONE',  ( -3.500000000000000888, 0.000000000000000000, 1.000000000000000000 ) ) ;
 #556 = ORIENTED_EDGE ( 'NONE', *, *, #107, .T. ) ;
@@ -647,7 +647,7 @@ DATA;
 #632 = ORIENTED_EDGE ( 'NONE', *, *, #156, .F. ) ;
 #633 = AXIS2_PLACEMENT_3D ( 'NONE', #187, #493, #295 ) ;
 #634 = APPROVAL ( #328, 'UNSPECIFIED' ) ;
-#635 = PRODUCT ( '2_conexao_Valor predeterminado_sldprt', '2_conexao_Valor predeterminado_sldprt', '', ( #379 ) ) ;
+#635 = PRODUCT ( '2_rotating_arm_default_sldprt', '2_rotating_arm_default_sldprt', '', ( #379 ) ) ;
 #636 = PLANE ( 'NONE',  #526 ) ;
 #637 = DIRECTION ( 'NONE',  ( 0.000000000000000000, -1.734723475976803890E-16, 1.000000000000000000 ) ) ;
 #638 = LOCAL_TIME ( 14, 37, 40.00000000000000000, #468 ) ;

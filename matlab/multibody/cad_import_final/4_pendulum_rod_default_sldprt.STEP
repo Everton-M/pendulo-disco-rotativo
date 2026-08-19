@@ -2,7 +2,7 @@ ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION (( 'STEP AP203' ),
     '1' );
-FILE_NAME ('4_corda_Valor predeterminado_sldprt.STEP',
+FILE_NAME ('4_pendulum_rod_default_sldprt.STEP',
     '2026-08-18T17:37:44',
     ( '' ),
     ( '' ),
@@ -45,7 +45,7 @@ DATA;
 #30 = ORIENTED_EDGE ( 'NONE', *, *, #49, .F. ) ;
 #31 = CYLINDRICAL_SURFACE ( 'NONE', #256, 0.05000000000000000278 ) ;
 #32 = ORIENTED_EDGE ( 'NONE', *, *, #206, .F. ) ;
-#33 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '4_corda_Valor predeterminado_sldprt', ( #216, #210, #180 ), #67 ) ;
+#33 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '4_pendulum_rod_default_sldprt', ( #216, #210, #180 ), #67 ) ;
 #34 = DATE_AND_TIME ( #213, #238 ) ;
 #35 = EDGE_CURVE ( 'NONE', #179, #139, #205, .T. ) ;
 #36 = APPLICATION_PROTOCOL_DEFINITION ( 'international standard', 'config_control_design', 1994, #102 ) ;
@@ -198,7 +198,7 @@ DATA;
 #183 = PERSON_AND_ORGANIZATION ( #80, #188 ) ;
 #184 = VERTEX_POINT ( 'NONE', #26 ) ;
 #185 = CALENDAR_DATE ( 2026, 18, 8 ) ;
-#186 = PRODUCT ( '4_corda_Valor predeterminado_sldprt', '4_corda_Valor predeterminado_sldprt', '', ( #39 ) ) ;
+#186 = PRODUCT ( '4_pendulum_rod_default_sldprt', '4_pendulum_rod_default_sldprt', '', ( #39 ) ) ;
 #187 = EDGE_CURVE ( 'NONE', #139, #179, #265, .T. ) ;
 #188 = ORGANIZATION ( 'UNSPECIFIED', 'UNSPECIFIED', '' ) ;
 #189 = PERSON_AND_ORGANIZATION_ROLE ( 'creator' ) ;

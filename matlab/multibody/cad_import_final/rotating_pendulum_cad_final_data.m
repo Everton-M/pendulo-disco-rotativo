@@ -19,52 +19,52 @@ smiData.RigidTransform(7).ID = "";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
-smiData.RigidTransform(1).translation = [277.50000000000017 0 76.000000000000071];  % mm
-smiData.RigidTransform(1).angle = 3.1415926535897931;  % rad
-smiData.RigidTransform(1).axis = [1 0 0];
-smiData.RigidTransform(1).ID = "B[2_conexao-2:-:3_disco-1]";
+smiData.RigidTransform(1).translation = [0 0 255.00000000000011];  % mm
+smiData.RigidTransform(1).angle = 0;  % rad
+smiData.RigidTransform(1).axis = [0 0 0];
+smiData.RigidTransform(1).ID = "B[1_fixed_base-2:-:2_rotating_arm-2]";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
-smiData.RigidTransform(2).translation = [1.034461134167978e-13 -1.3557090406509204e-13 -19];  % mm
-smiData.RigidTransform(2).angle = 3.1415926535897931;  % rad
-smiData.RigidTransform(2).axis = [1 0 0];
-smiData.RigidTransform(2).ID = "F[2_conexao-2:-:3_disco-1]";
+smiData.RigidTransform(2).translation = [-3.1416284613105786e-12 -1.9974010756295557e-12 -2.2737367544323206e-13];  % mm
+smiData.RigidTransform(2).angle = 0;  % rad
+smiData.RigidTransform(2).axis = [0 0 0];
+smiData.RigidTransform(2).ID = "F[1_fixed_base-2:-:2_rotating_arm-2]";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
-smiData.RigidTransform(3).translation = [70.250395503564818 -1.5181732400495473 104.99999999999999];  % mm
-smiData.RigidTransform(3).angle = 2.0943951023931953;  % rad
-smiData.RigidTransform(3).axis = [-0.57735026918962584 -0.57735026918962584 0.57735026918962584];
-smiData.RigidTransform(3).ID = "B[3_disco-1:-:4_corda-1]";
+smiData.RigidTransform(3).translation = [277.50000000000017 0 76.000000000000071];  % mm
+smiData.RigidTransform(3).angle = 3.1415926535897931;  % rad
+smiData.RigidTransform(3).axis = [1 0 0];
+smiData.RigidTransform(3).ID = "B[2_rotating_arm-2:-:3_rotating_disk-1]";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
-smiData.RigidTransform(4).translation = [5.9999999999999627 0.49999999999927391 -5.4456439357863928e-13];  % mm
-smiData.RigidTransform(4).angle = 2.0943951023931953;  % rad
-smiData.RigidTransform(4).axis = [-0.57735026918962584 -0.57735026918962562 0.57735026918962595];
-smiData.RigidTransform(4).ID = "F[3_disco-1:-:4_corda-1]";
+smiData.RigidTransform(4).translation = [1.034461134167978e-13 -1.3557090406509204e-13 -19];  % mm
+smiData.RigidTransform(4).angle = 3.1415926535897931;  % rad
+smiData.RigidTransform(4).axis = [1 0 0];
+smiData.RigidTransform(4).ID = "F[2_rotating_arm-2:-:3_rotating_disk-1]";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
-smiData.RigidTransform(5).translation = [0 0 255.00000000000011];  % mm
-smiData.RigidTransform(5).angle = 0;  % rad
-smiData.RigidTransform(5).axis = [0 0 0];
-smiData.RigidTransform(5).ID = "B[1_base_fixa-2:-:2_conexao-2]";
+smiData.RigidTransform(5).translation = [70.250395503564818 -1.5181732400495473 104.99999999999999];  % mm
+smiData.RigidTransform(5).angle = 2.0943951023931953;  % rad
+smiData.RigidTransform(5).axis = [-0.57735026918962584 -0.57735026918962584 0.57735026918962584];
+smiData.RigidTransform(5).ID = "B[3_rotating_disk-1:-:4_pendulum_rod-1]";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
-smiData.RigidTransform(6).translation = [-3.1416284613105786e-12 -1.9974010756295557e-12 -2.2737367544323206e-13];  % mm
-smiData.RigidTransform(6).angle = 0;  % rad
-smiData.RigidTransform(6).axis = [0 0 0];
-smiData.RigidTransform(6).ID = "F[1_base_fixa-2:-:2_conexao-2]";
+smiData.RigidTransform(6).translation = [5.9999999999999627 0.49999999999927391 -5.4456439357863928e-13];  % mm
+smiData.RigidTransform(6).angle = 2.0943951023931953;  % rad
+smiData.RigidTransform(6).axis = [-0.57735026918962584 -0.57735026918962562 0.57735026918962595];
+smiData.RigidTransform(6).ID = "F[3_rotating_disk-1:-:4_pendulum_rod-1]";
 
 %Translation Method - Cartesian
 %Rotation Method - Arbitrary Axis
 smiData.RigidTransform(7).translation = [-19.433247553764041 3.4008183219165953 1000.0000000000073];  % mm
 smiData.RigidTransform(7).angle = 0;  % rad
 smiData.RigidTransform(7).axis = [0 0 0];
-smiData.RigidTransform(7).ID = "RootGround[1_base_fixa-2]";
+smiData.RigidTransform(7).ID = "RootGround[1_fixed_base-2]";
 
 
 %============= Solid =============%
@@ -87,7 +87,7 @@ smiData.Solid(1).MoI = [2.538595931707138 2.5414221783666262 0.01811622430106881
 smiData.Solid(1).PoI = [-0.016144676981041797 0.096868061886250217 0.00078516421614794002];  % kg*cm^2
 smiData.Solid(1).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
 smiData.Solid(1).opacity = 1;
-smiData.Solid(1).ID = "4_corda*:*Valor predeterminado";
+smiData.Solid(1).ID = "4_pendulum_rod*:*default";
 
 %Inertia Type - Custom
 %Visual Properties - Simple
@@ -97,7 +97,7 @@ smiData.Solid(2).MoI = [1.1911938270841573 26.365460134114052 26.010659393404467
 smiData.Solid(2).PoI = [0 -1.9867489119169206 0];  % kg*cm^2
 smiData.Solid(2).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
 smiData.Solid(2).opacity = 1;
-smiData.Solid(2).ID = "2_conexao*:*Valor predeterminado";
+smiData.Solid(2).ID = "2_rotating_arm*:*default";
 
 %Inertia Type - Custom
 %Visual Properties - Simple
@@ -107,7 +107,7 @@ smiData.Solid(3).MoI = [1.5298679859124904 1.7953611253541799 2.7546299896371984
 smiData.Solid(3).PoI = [0.00047983318755422127 -0.22936337611687144 0.00031410936551380057];  % kg*cm^2
 smiData.Solid(3).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
 smiData.Solid(3).opacity = 1;
-smiData.Solid(3).ID = "3_disco*:*Valor predeterminado";
+smiData.Solid(3).ID = "3_rotating_disk*:*default";
 
 %Inertia Type - Custom
 %Visual Properties - Simple
@@ -117,7 +117,7 @@ smiData.Solid(4).MoI = [35.70275099062814 35.70275099062814 3.9455253197330054];
 smiData.Solid(4).PoI = [0 0 0];  % kg*cm^2
 smiData.Solid(4).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
 smiData.Solid(4).opacity = 1;
-smiData.Solid(4).ID = "1_base_fixa*:*Valor predeterminado";
+smiData.Solid(4).ID = "1_fixed_base*:*default";
 
 
 %============= Joint =============%
@@ -130,12 +130,12 @@ smiData.Solid(4).ID = "1_base_fixa*:*Valor predeterminado";
 smiData.RevoluteJoint(3).Rz.Pos = 0.0;
 smiData.RevoluteJoint(3).ID = "";
 
-smiData.RevoluteJoint(1).Rz.Pos = -87.454295162217761;  % deg
-smiData.RevoluteJoint(1).ID = "[2_conexao-2:-:3_disco-1]";
+smiData.RevoluteJoint(1).Rz.Pos = 55.200600511731921;  % deg
+smiData.RevoluteJoint(1).ID = "[1_fixed_base-2:-:2_rotating_arm-2]";
 
-smiData.RevoluteJoint(2).Rz.Pos = 146.00850608893253;  % deg
-smiData.RevoluteJoint(2).ID = "[3_disco-1:-:4_corda-1]";
+smiData.RevoluteJoint(2).Rz.Pos = -87.454295162217761;  % deg
+smiData.RevoluteJoint(2).ID = "[2_rotating_arm-2:-:3_rotating_disk-1]";
 
-smiData.RevoluteJoint(3).Rz.Pos = 55.200600511731921;  % deg
-smiData.RevoluteJoint(3).ID = "[1_base_fixa-2:-:2_conexao-2]";
+smiData.RevoluteJoint(3).Rz.Pos = 146.00850608893253;  % deg
+smiData.RevoluteJoint(3).ID = "[3_rotating_disk-1:-:4_pendulum_rod-1]";
 

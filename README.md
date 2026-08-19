@@ -104,7 +104,7 @@ O procedimento e a preparação para CAD estão descritos em
 
 ### CAD do SolidWorks validado
 
-A montagem corrigida está em `estrutura cad/corrected-solidworks`. A exportação
+A montagem corrigida está em `cad/corrected-solidworks`. A exportação
 final do Simscape Multibody Link foi verificada no MATLAB e produz exatamente
 três juntas revolutas (`alpha`, `beta` e `psi`), sem substituições rígidas ou
 juntas cilíndricas.
@@ -117,9 +117,9 @@ open_system(result.modelFile)
 ```
 
 O modelo gerado fica em
-`matlab/multibody/cad_import_final/rotating_pendulum_cad_final.slx`. Consulte
-`estrutura cad/CAD_REVIEW.md` para a topologia, os nomes dos posicionamentos e
-o procedimento de reexportação.
+`matlab/multibody/cad_import_final/rotating_pendulum_cad_final.slx`. Os arquivos
+nativos do SolidWorks e a exportação do Simscape ficam em
+`cad/corrected-solidworks`.
 
 ## Geometria
 

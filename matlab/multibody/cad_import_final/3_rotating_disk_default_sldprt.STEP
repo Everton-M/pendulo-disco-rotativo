@@ -2,7 +2,7 @@ ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION (( 'STEP AP203' ),
     '1' );
-FILE_NAME ('3_disco_Valor predeterminado_sldprt.STEP',
+FILE_NAME ('3_rotating_disk_default_sldprt.STEP',
     '2026-08-18T17:37:42',
     ( '' ),
     ( '' ),
@@ -69,7 +69,7 @@ DATA;
 #54 = CARTESIAN_POINT ( 'NONE',  ( 0.000000000000000000, 0.000000000000000000, -2.500000000000000000 ) ) ;
 #55 = APPLICATION_CONTEXT ( 'configuration controlled 3d designs of mechanical parts and assemblies' ) ;
 #56 = DIRECTION ( 'NONE',  ( -1.000000000000000000, 0.000000000000000000, 0.000000000000000000 ) ) ;
-#57 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '3_disco_Valor predeterminado_sldprt', ( #566, #370, #372, #188 ), #344 ) ;
+#57 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '3_rotating_disk_default_sldprt', ( #566, #370, #372, #188 ), #344 ) ;
 #58 = DIRECTION ( 'NONE',  ( 0.000000000000000000, 0.000000000000000000, -1.000000000000000000 ) ) ;
 #59 = CARTESIAN_POINT ( 'NONE',  ( -0.4000000000000000222, 4.898587196589412459E-17, -2.500000000000000000 ) ) ;
 #60 = ORIENTED_EDGE ( 'NONE', *, *, #538, .T. ) ;
@@ -351,7 +351,7 @@ DATA;
 #336 = CIRCLE ( 'NONE', #348, 7.500000000000000888 ) ;
 #337 = EDGE_LOOP ( 'NONE', ( #260, #257, #86, #21 ) ) ;
 #338 = DIRECTION ( 'NONE',  ( 0.000000000000000000, 0.000000000000000000, 1.000000000000000000 ) ) ;
-#339 = PRODUCT ( '3_disco_Valor predeterminado_sldprt', '3_disco_Valor predeterminado_sldprt', '', ( #157 ) ) ;
+#339 = PRODUCT ( '3_rotating_disk_default_sldprt', '3_rotating_disk_default_sldprt', '', ( #157 ) ) ;
 #340 = EDGE_LOOP ( 'NONE', ( #219, #491 ) ) ;
 #341 = CARTESIAN_POINT ( 'NONE',  ( 0.000000000000000000, 0.000000000000000000, 0.000000000000000000 ) ) ;
 #342 = COORDINATED_UNIVERSAL_TIME_OFFSET ( 3, 0, .BEHIND. ) ;
