@@ -16,8 +16,10 @@ a derivação e o diagrama.
 
 ## Como executar
 
+Com a pasta raiz do repositório definida como a pasta atual (*Current Folder*)
+do MATLAB, execute:
+
 ```matlab
-cd('C:\Users\E\Documents\1 - Unicamp\7 - Projetos\pendulo-disco-rotativo')
 addpath('matlab')
 addpath('matlab/simulink')
 open_simulink_model
