@@ -2,7 +2,7 @@ ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION (( 'STEP AP203' ),
     '1' );
-FILE_NAME ('1_base_fixa_Valor predeterminado_sldprt.STEP',
+FILE_NAME ('1_fixed_base_default_sldprt.STEP',
     '2026-08-18T17:37:38',
     ( '' ),
     ( '' ),
@@ -305,7 +305,7 @@ DATA;
 #290 = DIRECTION ( 'NONE',  ( -0.000000000000000000, -0.000000000000000000, -1.000000000000000000 ) ) ;
 #291 = ORIENTED_EDGE ( 'NONE', *, *, #284, .T. ) ;
 #292 = DIRECTION ( 'NONE',  ( 1.000000000000000000, 0.000000000000000000, 0.000000000000000000 ) ) ;
-#293 = PRODUCT ( '1_base_fixa_Valor predeterminado_sldprt', '1_base_fixa_Valor predeterminado_sldprt', '', ( #245 ) ) ;
+#293 = PRODUCT ( '1_fixed_base_default_sldprt', '1_fixed_base_default_sldprt', '', ( #245 ) ) ;
 #294 = CARTESIAN_POINT ( 'NONE',  ( -5.000000000000000888, -5.000000000000002665, 0.000000000000000000 ) ) ;
 #295 = COORDINATED_UNIVERSAL_TIME_OFFSET ( 3, 0, .BEHIND. ) ;
 #296 = FACE_OUTER_BOUND ( 'NONE', #137, .T. ) ;
@@ -355,7 +355,7 @@ DATA;
 #340 = FACE_OUTER_BOUND ( 'NONE', #179, .T. ) ;
 #341 = VECTOR ( 'NONE', #217, 100.0000000000000000 ) ;
 #342 = DIRECTION ( 'NONE',  ( 1.000000000000000000, 0.000000000000000000, 0.000000000000000000 ) ) ;
-#343 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '1_base_fixa_Valor predeterminado_sldprt', ( #29, #4 ), #23 ) ;
+#343 = ADVANCED_BREP_SHAPE_REPRESENTATION ( '1_fixed_base_default_sldprt', ( #29, #4 ), #23 ) ;
 #344 = CARTESIAN_POINT ( 'NONE',  ( 5.000000000000000000, -5.000000000000000888, 0.000000000000000000 ) ) ;
 #345 = APPLICATION_CONTEXT ( 'configuration controlled 3d designs of mechanical parts and assemblies' ) ;
 #346 = DIRECTION ( 'NONE',  ( -0.000000000000000000, -0.000000000000000000, -1.000000000000000000 ) ) ;

@@ -6,25 +6,25 @@
 <RootAssembly name="rotating_disk_pendulum_corrected" uid="rotating_disk_pendulum_corrected" version="295">
 <AssemblyFile name="rotating_disk_pendulum_corrected.SLDASM" type="SolidWorks Assembly"/>
 <InstanceTree>
-<Instance name="4_corda-1" uid="4_corda-1" entityUid="4_corda*:*Valor predeterminado">
+<Instance name="4_pendulum_rod-1" uid="4_pendulum_rod-1" entityUid="4_pendulum_rod*:*default">
 <Transform>
 <Rotation>-0.79499618884092427 0.50295650375897694 -0.33913981638101981 0.6066144242666881 0.65914770181158044 -0.44445837540551125 -2.0743909254671848e-16 -0.55906981900569286 -0.82912058078239859</Rotation>
 <Translation>0.08852802717439312 0.27112396850307274 1.4552795349095096</Translation>
 </Transform>
 </Instance>
-<Instance name="2_conexao-2" uid="2_conexao-2" entityUid="2_conexao*:*Valor predeterminado">
+<Instance name="2_rotating_arm-2" uid="2_rotating_arm-2" entityUid="2_rotating_arm*:*default">
 <Transform>
 <Rotation>0.57070496126465819 -0.82115519068438303 0 0.82115519068438303 0.57070496126465819 0 0 0 1</Rotation>
 <Translation>-0.019433247553763886 0.003400818321920315 1.2550000000000074</Translation>
 </Transform>
 </Instance>
-<Instance name="3_disco-1" uid="3_disco-1" entityUid="3_disco*:*Valor predeterminado">
+<Instance name="3_rotating_disk-1" uid="3_rotating_disk-1" entityUid="3_rotating_disk*:*default">
 <Transform>
 <Rotation>-0.79499618884092416 -0.60661442426668832 0 0.60661442426668832 -0.79499618884092405 0 0 0 1</Rotation>
 <Translation>0.13893737919717877 0.23127138373683659 1.3500000000000074</Translation>
 </Transform>
 </Instance>
-<Instance name="1_base_fixa-2" uid="1_base_fixa-2" grounded="true" entityUid="1_base_fixa*:*Valor predeterminado">
+<Instance name="1_fixed_base-2" uid="1_fixed_base-2" grounded="true" entityUid="1_fixed_base*:*default">
 <Transform>
 <Rotation>1 0 0 0 1 0 0 0 1</Rotation>
 <Translation>-0.019433247553764042 0.0034008183219165953 1.0000000000000073</Translation>
@@ -35,14 +35,14 @@
 <Coincident name="Coincidente3">
 <ConstraintGeometry geomType="plane">
 <InstancePath>
-<Uid>1_base_fixa-2</Uid>
+<Uid>1_fixed_base-2</Uid>
 </InstancePath>
 <Position>0 0 0.25500000000000012</Position>
 <Axis>0 0 1</Axis>
 </ConstraintGeometry>
 <ConstraintGeometry geomType="plane">
 <InstancePath>
-<Uid>2_conexao-2</Uid>
+<Uid>2_rotating_arm-2</Uid>
 </InstancePath>
 <Position>0 0 0</Position>
 <Axis>0 0 -1</Axis>
@@ -51,14 +51,14 @@
 <Concentric name="Concêntrico1">
 <ConstraintGeometry geomType="circle">
 <InstancePath>
-<Uid>1_base_fixa-2</Uid>
+<Uid>1_fixed_base-2</Uid>
 </InstancePath>
 <Position>0 0 0.25500000000000012</Position>
 <Axis>0 0 1</Axis>
 </ConstraintGeometry>
 <ConstraintGeometry geomType="cylinder">
 <InstancePath>
-<Uid>2_conexao-2</Uid>
+<Uid>2_rotating_arm-2</Uid>
 </InstancePath>
 <Position>0 0 0.010000000000000009</Position>
 <Axis>0 0 -1</Axis>
@@ -67,14 +67,14 @@
 <Concentric name="SMLINK_BETA_CONCENTRIC">
 <ConstraintGeometry geomType="cylinder">
 <InstancePath>
-<Uid>2_conexao-2</Uid>
+<Uid>2_rotating_arm-2</Uid>
 </InstancePath>
 <Position>0.27750000000000019 0 0.076000000000000068</Position>
 <Axis>0 0 -1</Axis>
 </ConstraintGeometry>
 <ConstraintGeometry geomType="cylinder">
 <InstancePath>
-<Uid>3_disco-1</Uid>
+<Uid>3_rotating_disk-1</Uid>
 </InstancePath>
 <Position>0 0 -0.030999999999999917</Position>
 <Axis>0 0 1</Axis>
@@ -83,14 +83,14 @@
 <Coincident name="SMLINK_BETA_COINCIDENT">
 <ConstraintGeometry geomType="plane">
 <InstancePath>
-<Uid>2_conexao-2</Uid>
+<Uid>2_rotating_arm-2</Uid>
 </InstancePath>
 <Position>0 0 0.070000000000000062</Position>
 <Axis>0 0 1</Axis>
 </ConstraintGeometry>
 <ConstraintGeometry geomType="plane">
 <InstancePath>
-<Uid>3_disco-1</Uid>
+<Uid>3_rotating_disk-1</Uid>
 </InstancePath>
 <Position>0 0 -0.024999999999999911</Position>
 <Axis>0 0 1</Axis>
@@ -99,14 +99,14 @@
 <Concentric name="SMLINK_PSI_CONCENTRIC">
 <ConstraintGeometry geomType="cylinder">
 <InstancePath>
-<Uid>3_disco-1</Uid>
+<Uid>3_rotating_disk-1</Uid>
 </InstancePath>
 <Position>0.070250395503564822 -0.0015181732400495473 0.10499999999999998</Position>
 <Axis>-1 0 0</Axis>
 </ConstraintGeometry>
 <ConstraintGeometry geomType="cylinder">
 <InstancePath>
-<Uid>4_corda-1</Uid>
+<Uid>4_pendulum_rod-1</Uid>
 </InstancePath>
 <Position>-0.0059999999999999915 0.00049999999999994493 -2.2204460492503131e-16</Position>
 <Axis>1 0 0</Axis>
@@ -115,14 +115,14 @@
 <Coincident name="SMLINK_PSI_COINCIDENT">
 <ConstraintGeometry geomType="plane">
 <InstancePath>
-<Uid>3_disco-1</Uid>
+<Uid>3_rotating_disk-1</Uid>
 </InstancePath>
 <Position>0.064250395503564817 0 0</Position>
 <Axis>1 0 0</Axis>
 </ConstraintGeometry>
 <ConstraintGeometry geomType="plane">
 <InstancePath>
-<Uid>4_corda-1</Uid>
+<Uid>4_pendulum_rod-1</Uid>
 </InstancePath>
 <Position>0 0 0</Position>
 <Axis>1 0 0</Axis>
@@ -133,15 +133,15 @@
 <Assemblies>
 </Assemblies>
 <Parts>
-<Part name="1_base_fixa" uid="1_base_fixa*:*Valor predeterminado" version="135">
+<Part name="1_fixed_base" uid="1_fixed_base*:*default" version="135">
 <ModelUnits mass="kilogram" length="centimeter"/>
-<PartFile name="1_base_fixa.SLDPRT" type="SolidWorks Part"/>
+<PartFile name="1_fixed_base.SLDPRT" type="SolidWorks Part"/>
 <MassProperties>
 <Mass>0.55526545231308333</Mass>
 <CenterOfMass>0 0 0.081886204365876361</CenterOfMass>
 <Inertia>0.0035702750990628143 0.0035702750990628143 0.00039455253197330053 0 0 0</Inertia>
 </MassProperties>
-<GeometryFile name="1_base_fixa_Valor predeterminado_sldprt.STEP" type="STEP"/>
+<GeometryFile name="1_fixed_base_default_sldprt.STEP" type="STEP"/>
 <VisualProperties>
 <Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
 <Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
@@ -150,15 +150,15 @@
 <Shininess>0.3125</Shininess>
 </VisualProperties>
 </Part>
-<Part name="2_conexao" uid="2_conexao*:*Valor predeterminado" version="313">
+<Part name="2_rotating_arm" uid="2_rotating_arm*:*default" version="313">
 <ModelUnits mass="kilogram" length="centimeter"/>
-<PartFile name="2_conexao.SLDPRT" type="SolidWorks Part"/>
+<PartFile name="2_rotating_arm.SLDPRT" type="SolidWorks Part"/>
 <MassProperties>
 <Mass>0.19948725169915843</Mass>
 <CenterOfMass>0.20942865876722297 0 0.019630646895575726</CenterOfMass>
 <Inertia>0.00011911938270841574 0.0026365460134114053 0.0026010659393404466 0 -0.00019867489119169206 0</Inertia>
 </MassProperties>
-<GeometryFile name="2_conexao_Valor predeterminado_sldprt.STEP" type="STEP"/>
+<GeometryFile name="2_rotating_arm_default_sldprt.STEP" type="STEP"/>
 <VisualProperties>
 <Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
 <Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
@@ -167,15 +167,15 @@
 <Shininess>0.3125</Shininess>
 </VisualProperties>
 </Part>
-<Part name="3_disco" uid="3_disco*:*Valor predeterminado" version="175">
+<Part name="3_rotating_disk" uid="3_rotating_disk*:*default" version="175">
 <ModelUnits mass="kilogram" length="centimeter"/>
-<PartFile name="3_disco.SLDPRT" type="SolidWorks Part"/>
+<PartFile name="3_rotating_disk.SLDPRT" type="SolidWorks Part"/>
 <MassProperties>
 <Mass>0.10330484701033957</Mass>
 <CenterOfMass>0.004233026181524149 -4.8446634215697361e-06 0.0048682358256850328</CenterOfMass>
 <Inertia>0.00015298679859124904 0.00017953611253541799 0.00027546299896371982 4.7983318755422128e-08 -2.2936337611687144e-05 3.1410936551380056e-08</Inertia>
 </MassProperties>
-<GeometryFile name="3_disco_Valor predeterminado_sldprt.STEP" type="STEP"/>
+<GeometryFile name="3_rotating_disk_default_sldprt.STEP" type="STEP"/>
 <VisualProperties>
 <Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
 <Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
@@ -184,15 +184,15 @@
 <Shininess>0.3125</Shininess>
 </VisualProperties>
 </Part>
-<Part name="4_corda" uid="4_corda*:*Valor predeterminado" version="171">
+<Part name="4_pendulum_rod" uid="4_pendulum_rod*:*default" version="171">
 <ModelUnits mass="kilogram" length="centimeter"/>
-<PartFile name="4_corda.SLDPRT" type="SolidWorks Part"/>
+<PartFile name="4_pendulum_rod.SLDPRT" type="SolidWorks Part"/>
 <MassProperties>
 <Mass>0.25</Mass>
 <CenterOfMass>0 0 -0.082500000000000004</CenterOfMass>
 <Inertia>0.00025385959317071382 0.00025414221783666262 1.8116224301068818e-06 -1.6144676981041796e-06 9.6868061886250215e-06 7.8516421614794001e-08</Inertia>
 </MassProperties>
-<GeometryFile name="4_corda_Valor predeterminado_sldprt.STEP" type="STEP"/>
+<GeometryFile name="4_pendulum_rod_default_sldprt.STEP" type="STEP"/>
 <VisualProperties>
 <Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
 <Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>

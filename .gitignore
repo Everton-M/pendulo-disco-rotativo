@@ -35,9 +35,9 @@ docs/CHAT_CONTEXT.md
 
 # SolidWorks temporary files and local installation package
 ~$*
-estrutura cad/smlink-r2024a-win64.zip
+cad/local-tools/
 
 # Intermediate CAD imports retained only for local diagnosis
-estrutura cad/simscape-export/
+cad/local-diagnostics/
 matlab/multibody/cad_import_raw/
 matlab/multibody/cad_model_corrected/

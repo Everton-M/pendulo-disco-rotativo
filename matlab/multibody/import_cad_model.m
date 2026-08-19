@@ -11,8 +11,8 @@ end
 
 thisFolder = fileparts(mfilename('fullpath'));
 projectRoot = fileparts(fileparts(thisFolder));
-exportFolder = fullfile(projectRoot, 'estrutura cad', ...
-    'corrected-solidworks', 'simscape-export-corrected');
+exportFolder = fullfile(projectRoot, 'cad', ...
+    'corrected-solidworks', 'simscape-export');
 xmlFile = fullfile(exportFolder, 'rotating_disk_pendulum_corrected.xml');
 
 assert(isfile(xmlFile), 'rotpend:cad:MissingXML', ...
@@ -38,6 +38,14 @@ end
 outputFolder = fullfile(thisFolder, 'cad_import_final');
 if ~isfolder(outputFolder)
     mkdir(outputFolder);
+end
+
+if options.Overwrite
+    previousStepFiles = dir(fullfile(outputFolder, '*.STEP'));
+    for index = 1:numel(previousStepFiles)
+        delete(fullfile(previousStepFiles(index).folder, ...
+            previousStepFiles(index).name));
+    end
 end
 
 stepFiles = dir(fullfile(exportFolder, '*.STEP'));
