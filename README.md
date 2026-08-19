@@ -44,8 +44,10 @@ A pasta `matlab/+rotpend` reúne a lei de movimento, a EDO, a cinemática e o
 pós-processamento. `matlab/+numerics/rk4.m` contém um RK4 clássico independente
 do problema.
 
+Com a pasta raiz do repositório definida como a pasta atual (*Current Folder*)
+do MATLAB, execute:
+
 ```matlab
-cd('C:\Users\E\Documents\1 - Unicamp\7 - Projetos\pendulo-disco-rotativo')
 addpath('matlab')
 run('matlab/run_simulation.m')
 results = run_all_tests();

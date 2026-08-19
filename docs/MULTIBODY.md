@@ -8,8 +8,10 @@ substituição dos sólidos simples por peças CAD.
 
 ## Abrir e simular
 
+Com a pasta raiz do repositório definida como a pasta atual (*Current Folder*)
+do MATLAB, execute:
+
 ```matlab
-cd('C:\Users\E\Documents\1 - Unicamp\7 - Projetos\pendulo-disco-rotativo')
 addpath('matlab')
 addpath('matlab/multibody')
 open_multibody_model
